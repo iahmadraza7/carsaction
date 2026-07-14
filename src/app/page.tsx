@@ -1,102 +1,106 @@
-import Image from "next/image";
+import Link from "next/link";
 
-export default function Home() {
+import { auth } from "@/auth";
+import { buttonVariants } from "@/components/ui/button";
+import { LogoutButton } from "@/components/auth/logout-button";
+
+function dashboardHref(role?: string) {
+  if (role === "ADMIN") return "/admin/dashboard";
+  if (role === "DEALER") return "/dealer/dashboard";
+  if (role === "FINANCE_CO") return "/finance/dashboard";
+  return "/";
+}
+
+export default async function Home() {
+  const session = await auth();
+  const user = session?.user;
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="flex min-h-svh flex-col bg-background">
+      <header className="border-b bg-card">
+        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+          <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
+            <span className="inline-flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
+              C
+            </span>
+            CARS<span className="-ml-1 text-primary">action</span>
+          </Link>
+          <nav className="flex items-center gap-2">
+            {user ? (
+              <>
+                <span className="hidden text-sm text-muted-foreground sm:inline">
+                  {user.email}
+                </span>
+                <Link
+                  href={dashboardHref(user.role)}
+                  className={buttonVariants({ size: "sm", variant: "outline" })}
+                >
+                  Dashboard
+                </Link>
+                <LogoutButton />
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className={buttonVariants({ size: "sm", variant: "ghost" })}
+                >
+                  Sign in
+                </Link>
+                <Link href="/signup" className={buttonVariants({ size: "sm" })}>
+                  Get started
+                </Link>
+              </>
+            )}
+          </nav>
+        </div>
+      </header>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      <main className="mx-auto flex w-full max-w-6xl flex-1 flex-col items-center justify-center px-4 py-20 text-center">
+        <span className="mb-5 inline-flex items-center rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
+          Singapore car marketplace
+        </span>
+        <h1 className="max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
+          Buy and sell cars in Singapore, the transparent way.
+        </h1>
+        <p className="mt-5 max-w-2xl text-base text-muted-foreground text-pretty sm:text-lg">
+          Flat monthly dealer subscriptions instead of per-car fees. Every listing shows COE
+          expiry, depreciation, OMV and ARF — the numbers Singapore buyers actually compare.
+        </p>
+
+        <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+          {user ? (
+            <Link href={dashboardHref(user.role)} className={buttonVariants({ size: "lg" })}>
+              Go to your dashboard
+            </Link>
+          ) : (
+            <>
+              <Link href="/signup" className={buttonVariants({ size: "lg" })}>
+                Create a buyer account
+              </Link>
+              <Link
+                href="/dealer/signup"
+                className={buttonVariants({ size: "lg", variant: "outline" })}
+              >
+                Register your dealership
+              </Link>
+            </>
+          )}
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+
+      <footer className="border-t">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground">
+          <span>CARSaction — Phase 1: auth & roles</span>
+          <span className="flex gap-4">
+            <Link href="/dealer/dashboard" className="hover:text-foreground hover:underline">
+              Dealer dashboard
+            </Link>
+            <Link href="/admin/dashboard" className="hover:text-foreground hover:underline">
+              Admin dashboard
+            </Link>
+          </span>
+        </div>
       </footer>
     </div>
   );
