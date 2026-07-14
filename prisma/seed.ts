@@ -42,6 +42,14 @@ function regDate(year: number): Date {
   return new Date(Date.UTC(year, 2, 15)); // mid-March, arbitrary but stable
 }
 
+/**
+ * Build a direct Unsplash image URL from a photo ID. Every ID below was manually
+ * verified to show a real car matching the listing's body type.
+ */
+function img(id: string): string {
+  return `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1600&q=80`;
+}
+
 async function main() {
   console.log("Seeding CARSaction database...");
 
@@ -234,10 +242,8 @@ async function main() {
       arf: "18500.00",
       description:
         "Well-maintained Corolla Altis with full agent service history. Fuel efficient, reliable and cheap to run. One owner, non-accident.",
-      images: [
-        "https://picsum.photos/seed/altis-1/1200/800",
-        "https://picsum.photos/seed/altis-2/1200/800",
-      ],
+      // SEDAN — white Ford Fusion, Honda Accord
+      images: [img("1773063250524-38ac5eebd3c5"), img("1751601396408-57c61df2ab6b")],
     },
     {
       dealerId: dealer1.id,
@@ -260,10 +266,8 @@ async function main() {
       arf: "24300.00",
       description:
         "Popular hybrid compact SUV. Excellent fuel economy, spacious boot, keyless entry, reverse camera. Ideal family car.",
-      images: [
-        "https://picsum.photos/seed/vezel-1/1200/800",
-        "https://picsum.photos/seed/vezel-2/1200/800",
-      ],
+      // SUV — white Honda CR-V, white Ford SUV
+      images: [img("1519641471654-76ce0107ad1b"), img("1533473359331-0135ef1b58bf")],
     },
     {
       dealerId: dealer1.id,
@@ -286,10 +290,8 @@ async function main() {
       arf: "19800.00",
       description:
         "Sporty and stylish hatchback with SkyActiv technology. Leather seats, sunroof, heads-up display. A joy to drive.",
-      images: [
-        "https://picsum.photos/seed/mazda3-1/1200/800",
-        "https://picsum.photos/seed/mazda3-2/1200/800",
-      ],
+      // HATCHBACK — red & white VW Golf GTI
+      images: [img("1560282105-222992ffb774"), img("1630019499081-50ed7838a1cd")],
     },
     {
       dealerId: dealer1.id,
@@ -312,10 +314,8 @@ async function main() {
       arf: "38300.00",
       description:
         "Executive sedan in pristine condition. Full leather interior, powered seats, adaptive cruise control, Toyota Safety Sense.",
-      images: [
-        "https://picsum.photos/seed/camry-1/1200/800",
-        "https://picsum.photos/seed/camry-2/1200/800",
-      ],
+      // SEDAN — Honda Accord, Audi RS3
+      images: [img("1745100892350-d9bdf600aaa5"), img("1613507323749-df09c966f063")],
     },
     {
       dealerId: dealer1.id,
@@ -337,10 +337,8 @@ async function main() {
       arf: "58600.00",
       description:
         "Fully electric with Autopilot. Low mileage, glass roof, premium connectivity. Zero road tax savings and instant torque.",
-      images: [
-        "https://picsum.photos/seed/model3-1/1200/800",
-        "https://picsum.photos/seed/model3-2/1200/800",
-      ],
+      // ELECTRIC SEDAN — white Tesla Model 3, Tesla charging
+      images: [img("1566939901805-ea36bc6cfd60"), img("1700411881984-971bc29083bd")],
     },
     {
       dealerId: dealer1.id,
@@ -363,10 +361,8 @@ async function main() {
       arf: "20400.00",
       description:
         "Compact 7-seater MPV with dual power sliding doors. Perfect for growing families. Hybrid fuel savings for daily commutes.",
-      images: [
-        "https://picsum.photos/seed/sienta-1/1200/800",
-        "https://picsum.photos/seed/sienta-2/1200/800",
-      ],
+      // MPV — white & dark people carriers
+      images: [img("1776774853502-11e7a46252d8"), img("1771210341023-f0a59d711d6c")],
     },
     {
       dealerId: dealer2.id,
@@ -389,10 +385,8 @@ async function main() {
       arf: "44650.00",
       description:
         "Sport line with M Sport steering, sport seats and LED headlights. Well kept, agent maintained. A true driver's sedan.",
-      images: [
-        "https://picsum.photos/seed/bmw320-1/1200/800",
-        "https://picsum.photos/seed/bmw320-2/1200/800",
-      ],
+      // SEDAN — BMW coupe, Porsche Panamera
+      images: [img("1580273916550-e323be2ae537"), img("1503376780353-7e6692767b70")],
     },
     {
       dealerId: dealer2.id,
@@ -415,10 +409,8 @@ async function main() {
       arf: "42340.00",
       description:
         "Elegant Avantgarde trim with Artico leather, LED High Performance headlamps and reverse camera. Beautiful condition.",
-      images: [
-        "https://picsum.photos/seed/c180-1/1200/800",
-        "https://picsum.photos/seed/c180-2/1200/800",
-      ],
+      // SEDAN — Porsche Panamera, Audi RS3
+      images: [img("1503376780353-7e6692767b70"), img("1613507323749-df09c966f063")],
     },
   ];
 

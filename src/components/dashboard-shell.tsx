@@ -8,11 +8,13 @@ export function DashboardShell({
   name,
   email,
   role,
+  children,
 }: {
   label: string;
   name: string;
   email: string;
   role: string;
+  children?: React.ReactNode;
 }) {
   return (
     <div className="min-h-svh bg-background">
@@ -39,16 +41,18 @@ export function DashboardShell({
           <h1 className="text-2xl font-semibold tracking-tight">Welcome, {name}</h1>
         </div>
 
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>Your session</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-2 text-sm">
-            <Row k="Name" v={name} />
-            <Row k="Email" v={email} />
-            <Row k="Role" v={role} />
-          </CardContent>
-        </Card>
+        {children ?? (
+          <Card className="max-w-md">
+            <CardHeader>
+              <CardTitle>Your session</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2 text-sm">
+              <Row k="Name" v={name} />
+              <Row k="Email" v={email} />
+              <Row k="Role" v={role} />
+            </CardContent>
+          </Card>
+        )}
       </main>
     </div>
   );

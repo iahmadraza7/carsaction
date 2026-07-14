@@ -26,6 +26,12 @@ export default async function Home() {
             CARS<span className="-ml-1 text-primary">action</span>
           </Link>
           <nav className="flex items-center gap-2">
+            <Link
+              href="/cars"
+              className="mr-1 hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline"
+            >
+              Browse cars
+            </Link>
             {user ? (
               <>
                 <span className="hidden text-sm text-muted-foreground sm:inline">
@@ -69,35 +75,39 @@ export default async function Home() {
         </p>
 
         <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row">
+          <Link href="/cars" className={buttonVariants({ size: "lg" })}>
+            Browse cars
+          </Link>
           {user ? (
-            <Link href={dashboardHref(user.role)} className={buttonVariants({ size: "lg" })}>
+            <Link
+              href={dashboardHref(user.role)}
+              className={buttonVariants({ size: "lg", variant: "outline" })}
+            >
               Go to your dashboard
             </Link>
           ) : (
-            <>
-              <Link href="/signup" className={buttonVariants({ size: "lg" })}>
-                Create a buyer account
-              </Link>
-              <Link
-                href="/dealer/signup"
-                className={buttonVariants({ size: "lg", variant: "outline" })}
-              >
-                Register your dealership
-              </Link>
-            </>
+            <Link
+              href="/dealer/signup"
+              className={buttonVariants({ size: "lg", variant: "outline" })}
+            >
+              Register your dealership
+            </Link>
           )}
         </div>
       </main>
 
       <footer className="border-t">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground">
-          <span>CARSaction — Phase 1: auth & roles</span>
+          <span>CARSaction — Singapore car marketplace</span>
           <span className="flex gap-4">
-            <Link href="/dealer/dashboard" className="hover:text-foreground hover:underline">
-              Dealer dashboard
+            <Link href="/cars" className="hover:text-foreground hover:underline">
+              Browse cars
             </Link>
-            <Link href="/admin/dashboard" className="hover:text-foreground hover:underline">
-              Admin dashboard
+            <Link href="/pricing" className="hover:text-foreground hover:underline">
+              Pricing
+            </Link>
+            <Link href="/dealer/signup" className="hover:text-foreground hover:underline">
+              List with us
             </Link>
           </span>
         </div>
