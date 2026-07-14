@@ -1,0 +1,289 @@
+// CARSaction — Prisma schema
+// Singapore car marketplace with dealer subscriptions and repo vehicle bidding.
+//
+// Milestone 1 tables are used now. Milestone 2 tables (FinanceProfile, RepoVehicle,
+// RepoImage, Bid, BidHistory) are included up front so repo bidding drops in later
+// without a schema rewrite.
+//
+// Money is always Decimal(12,2), never Float. Currency is SGD.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum Role {
+  BUYER
+  DEALER
+  ADMIN
+  FINANCE_CO // finance company, unused until milestone 2
+}
+
+enum SubStatus {
+  NONE
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+}
+
+enum Tier {
+  GOLD
+  PLATINUM
+}
+
+enum BodyType {
+  SEDAN
+  SUV
+  HATCHBACK
+  MPV
+  COUPE
+  WAGON
+  VAN
+  TRUCK
+}
+
+enum FuelType {
+  PETROL
+  DIESEL
+  HYBRID
+  ELECTRIC
+}
+
+enum Transmission {
+  AUTO
+  MANUAL
+}
+
+enum ListingStatus {
+  FOR_SALE
+  SOLD
+  DRAFT
+}
+
+enum AuctionStatus {
+  OPEN
+  CLOSED
+  AWARDED
+  CANCELLED
+}
+
+// ---------------------------------------------------------------------------
+// Milestone 1
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String?
+  name         String
+  phone        String?
+  role         Role     @default(BUYER)
+  createdAt    DateTime @default(now())
+
+  dealerProfile  DealerProfile?
+  financeProfile FinanceProfile? // milestone 2
+  favourites     Favourite[]
+  enquiries      Enquiry[]
+  bids           Bid[] // milestone 2
+}
+
+model DealerProfile {
+  id             String  @id @default(cuid())
+  userId         String  @unique
+  businessName   String
+  uen            String? // SG business registration number
+  address        String?
+  whatsappNumber String // for the WhatsApp contact button
+  logoUrl        String?
+  verified       Boolean @default(false) // admin verifies dealers
+
+  subscriptionStatus   SubStatus @default(NONE)
+  tier                 Tier?
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  currentPeriodEnd     DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listings Listing[]
+}
+
+model Listing {
+  id           String        @id @default(cuid())
+  dealerId     String
+  title        String
+  make         String
+  model        String
+  variant      String?
+  year         Int
+  price        Decimal       @db.Decimal(12, 2) // SGD
+  mileage      Int // km
+  bodyType     BodyType
+  fuelType     FuelType
+  transmission Transmission
+  engineCc     Int?
+  colour       String?
+  regDate      DateTime? // SG registration date
+  coeExpiry    DateTime? // COE expiry, important in Singapore
+  depreciation Decimal?      @db.Decimal(12, 2) // SGD per year
+  omv          Decimal?      @db.Decimal(12, 2) // Open Market Value, SG specific
+  arf          Decimal?      @db.Decimal(12, 2) // Additional Registration Fee, SG specific
+  description  String?
+  status       ListingStatus @default(FOR_SALE)
+  viewCount    Int           @default(0)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  dealer     DealerProfile  @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  images     ListingImage[]
+  favourites Favourite[]
+  enquiries  Enquiry[]
+
+  @@index([dealerId])
+  @@index([status])
+  @@index([make, model])
+}
+
+model ListingImage {
+  id        String @id @default(cuid())
+  listingId String
+  url       String
+  order     Int
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model Favourite {
+  id        String @id @default(cuid())
+  userId    String
+  listingId String
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+  @@index([listingId])
+}
+
+model Enquiry {
+  id        String   @id @default(cuid())
+  listingId String
+  buyerId   String? // nullable: enquiry can come from a guest
+  name      String
+  phone     String
+  message   String?
+  createdAt DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer   User?   @relation(fields: [buyerId], references: [id], onDelete: SetNull)
+
+  @@index([listingId])
+  @@index([buyerId])
+}
+
+model SubscriptionPlan {
+  id            String  @id @default(cuid())
+  tier          Tier    @unique
+  name          String
+  monthlyPrice  Decimal @db.Decimal(12, 2) // SGD
+  listingLimit  Int? // null = unlimited
+  stripePriceId String
+  active        Boolean @default(true)
+}
+
+// ---------------------------------------------------------------------------
+// Milestone 2 (designed now, built later)
+// ---------------------------------------------------------------------------
+
+model FinanceProfile {
+  id            String  @id @default(cuid())
+  userId        String  @unique
+  companyName   String
+  uen           String?
+  contactPerson String?
+  verified      Boolean @default(false)
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  repoVehicles RepoVehicle[]
+}
+
+model RepoVehicle {
+  id           String    @id @default(cuid())
+  financeCoId  String
+  make         String
+  model        String
+  year         Int
+  mileage      Int
+  bodyType     BodyType
+  colour       String?
+  regDate      DateTime?
+  coeExpiry    DateTime?
+  condition    String?
+  location     String? // where the vehicle can be viewed
+  reservePrice Decimal?  @db.Decimal(12, 2) // optional, only finance co sees this
+  description  String?
+
+  biddingOpensAt  DateTime
+  biddingClosesAt DateTime
+  status          AuctionStatus @default(OPEN)
+
+  winningBidId String?   @unique
+  awardedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  financeCo  FinanceProfile @relation(fields: [financeCoId], references: [id], onDelete: Cascade)
+  images     RepoImage[]
+  bids       Bid[]          @relation("VehicleBids")
+  winningBid Bid?           @relation("WinningBid", fields: [winningBidId], references: [id], onDelete: SetNull)
+
+  @@index([financeCoId])
+  @@index([status])
+}
+
+model RepoImage {
+  id            String @id @default(cuid())
+  repoVehicleId String
+  url           String
+  order         Int
+
+  repoVehicle RepoVehicle @relation(fields: [repoVehicleId], references: [id], onDelete: Cascade)
+
+  @@index([repoVehicleId])
+}
+
+model Bid {
+  id            String   @id @default(cuid())
+  repoVehicleId String
+  dealerId      String
+  amount        Decimal  @db.Decimal(12, 2) // SGD
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  repoVehicle RepoVehicle  @relation("VehicleBids", fields: [repoVehicleId], references: [id], onDelete: Cascade)
+  dealer      User         @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+  history     BidHistory[]
+  wonVehicle  RepoVehicle? @relation("WinningBid")
+
+  @@unique([repoVehicleId, dealerId]) // one live bid per dealer per vehicle, they edit it
+  @@index([dealerId])
+}
+
+model BidHistory {
+  id        String   @id @default(cuid())
+  bidId     String
+  amount    Decimal  @db.Decimal(12, 2)
+  changedAt DateTime @default(now())
+
+  bid Bid @relation(fields: [bidId], references: [id], onDelete: Cascade)
+
+  @@index([bidId])
+}
