@@ -75,6 +75,12 @@ enum AuctionStatus {
   CANCELLED
 }
 
+enum PaymentStatus {
+  PAID
+  FAILED
+  REFUNDED
+}
+
 // ---------------------------------------------------------------------------
 // Milestone 1
 // ---------------------------------------------------------------------------
@@ -88,6 +94,7 @@ model User {
   name          String
   phone         String?
   role          Role      @default(BUYER)
+  suspended     Boolean   @default(false) // admin can lock an account without deleting it
   createdAt     DateTime  @default(now())
 
   dealerProfile  DealerProfile?
@@ -175,6 +182,8 @@ model DealerProfile {
 
   user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   listings Listing[]
+  payments Payment[]
+  sales    Sale[]
 }
 
 model Listing {
@@ -207,6 +216,7 @@ model Listing {
   images     ListingImage[]
   favourites Favourite[]
   enquiries  Enquiry[]
+  sale       Sale?
 
   @@index([dealerId])
   @@index([status])
@@ -260,6 +270,47 @@ model SubscriptionPlan {
   listingLimit  Int? // null = unlimited
   stripePriceId String
   active        Boolean @default(true)
+}
+
+// Subscription billing history. One row per Stripe invoice, synced from webhooks
+// (invoice.payment_succeeded / invoice.payment_failed). Never written from a redirect.
+model Payment {
+  id                    String        @id @default(cuid())
+  dealerId              String
+  stripeInvoiceId       String?       @unique
+  stripePaymentIntentId String?
+  amount                Decimal       @db.Decimal(12, 2) // SGD
+  currency              String        @default("sgd")
+  status                PaymentStatus @default(PAID)
+  tier                  Tier?
+  description           String?
+  periodStart           DateTime?
+  periodEnd             DateTime?
+  createdAt             DateTime      @default(now())
+
+  dealer DealerProfile @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+
+  @@index([dealerId])
+  @@index([status])
+}
+
+// Car sale transaction. Created when a dealer marks a listing SOLD; removed if
+// they switch it back to FOR_SALE. One sale per listing.
+model Sale {
+  id         String   @id @default(cuid())
+  listingId  String   @unique
+  dealerId   String
+  salePrice  Decimal  @db.Decimal(12, 2) // SGD
+  buyerName  String?
+  buyerPhone String?
+  notes      String?
+  soldAt     DateTime @default(now())
+  createdAt  DateTime @default(now())
+
+  listing Listing       @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  dealer  DealerProfile @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+
+  @@index([dealerId])
 }
 
 // ---------------------------------------------------------------------------

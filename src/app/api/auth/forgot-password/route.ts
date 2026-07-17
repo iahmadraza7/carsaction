@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { forgotPasswordSchema } from "@/lib/validations/auth";
 import { createResetToken } from "@/lib/tokens";
 import { sendPasswordResetEmail } from "@/lib/mail";
+import { enforceRateLimit } from "@/lib/rate-limit-http";
 
 function appUrl(): string {
   return (
@@ -12,6 +13,9 @@ function appUrl(): string {
 }
 
 export async function POST(req: Request) {
+  const limited = enforceRateLimit(req, "forgot-password", 5, 15 * 60_000);
+  if (limited.response) return limited.response;
+
   let body: unknown;
   try {
     body = await req.json();

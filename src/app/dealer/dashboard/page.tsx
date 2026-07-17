@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
-import { CheckCircle2Icon } from "lucide-react";
-import { SubStatus } from "@prisma/client";
+import { CheckCircle2Icon, PlusIcon } from "lucide-react";
+import { PaymentStatus, SubStatus } from "@prisma/client";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -13,6 +13,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { SubscribeButton } from "@/components/billing/subscribe-button";
 import { ManageBillingButton } from "@/components/billing/manage-billing-button";
 import { formatPrice, formatDate } from "@/lib/format";
+import { humanizeEnum } from "@/lib/listing-options";
 import {
   getDealerProfileByUserId,
   getActivePlans,
@@ -33,10 +34,27 @@ export default async function DealerDashboardPage({
   const { checkout } = await searchParams;
   const profile = await getDealerProfileByUserId(session.user.id);
 
-  const [plans, listingCount] = await Promise.all([
+  const [plans, listingCount, payments, sales] = await Promise.all([
     getActivePlans(),
     profile ? prisma.listing.count({ where: { dealerId: profile.id } }) : Promise.resolve(0),
+    profile
+      ? prisma.payment.findMany({
+          where: { dealerId: profile.id },
+          orderBy: { createdAt: "desc" },
+          take: 6,
+        })
+      : Promise.resolve([]),
+    profile
+      ? prisma.sale.findMany({
+          where: { dealerId: profile.id },
+          orderBy: { soldAt: "desc" },
+          take: 5,
+          include: { listing: { select: { id: true, title: true } } },
+        })
+      : Promise.resolve([]),
   ]);
+
+  const salesTotal = sales.reduce((sum, s) => sum + Number(s.salePrice), 0);
 
   const active = isSubscriptionActive(profile?.subscriptionStatus);
   const currentPlan = profile?.tier
@@ -133,15 +151,104 @@ export default async function DealerDashboardPage({
         </Card>
 
         <Card className="max-w-2xl">
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle>Your inventory</CardTitle>
+            <Link
+              href="/dealer/listings"
+              className={buttonVariants({ variant: "outline", size: "sm" })}
+            >
+              Manage listings
+            </Link>
           </CardHeader>
-          <CardContent className="text-sm text-muted-foreground">
-            You have <span className="font-medium text-foreground">{listingCount}</span> listing
-            {listingCount === 1 ? "" : "s"}.
-            {!active
-              ? " An active subscription is required before you can publish new listings."
-              : " Listing management tools are coming next."}
+          <CardContent className="flex flex-col gap-3 text-sm text-muted-foreground">
+            <p>
+              You have <span className="font-medium text-foreground">{listingCount}</span> listing
+              {listingCount === 1 ? "" : "s"}.
+              {!active
+                ? " An active subscription is required before you can publish new listings."
+                : ""}
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {active ? (
+                <Link href="/dealer/listings/new" className={buttonVariants({ size: "sm" })}>
+                  <PlusIcon />
+                  Add listing
+                </Link>
+              ) : null}
+              <Link
+                href="/dealer/enquiries"
+                className={buttonVariants({ variant: "ghost", size: "sm" })}
+              >
+                View enquiries
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        {sales.length > 0 ? (
+          <Card className="max-w-2xl">
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
+              <CardTitle>Recent sales</CardTitle>
+              <span className="text-sm text-muted-foreground">
+                {formatPrice(salesTotal)} total
+              </span>
+            </CardHeader>
+            <CardContent className="flex flex-col divide-y text-sm">
+              {sales.map((sale) => (
+                <div key={sale.id} className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
+                  <div className="min-w-0">
+                    <Link href={`/cars/${sale.listing.id}`} className="block truncate font-medium hover:underline">
+                      {sale.listing.title}
+                    </Link>
+                    <span className="text-xs text-muted-foreground">
+                      {sale.buyerName ? `${sale.buyerName} · ` : ""}
+                      {formatDate(sale.soldAt)}
+                    </span>
+                  </div>
+                  <span className="font-semibold">{formatPrice(Number(sale.salePrice))}</span>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
+        ) : null}
+
+        <Card className="max-w-2xl">
+          <CardHeader>
+            <CardTitle>Billing history</CardTitle>
+          </CardHeader>
+          <CardContent className="text-sm">
+            {payments.length === 0 ? (
+              <p className="text-muted-foreground">
+                No invoices yet. Subscription payments will appear here once billing runs.
+              </p>
+            ) : (
+              <div className="flex flex-col divide-y">
+                {payments.map((p) => (
+                  <div key={p.id} className="flex items-center justify-between gap-3 py-2 first:pt-0 last:pb-0">
+                    <div className="min-w-0">
+                      <span className="block truncate font-medium">
+                        {p.description ?? "CARSaction subscription"}
+                      </span>
+                      <span className="text-xs text-muted-foreground">{formatDate(p.createdAt)}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold">{formatPrice(Number(p.amount))}</span>
+                      <Badge
+                        variant={
+                          p.status === PaymentStatus.PAID
+                            ? "default"
+                            : p.status === PaymentStatus.FAILED
+                              ? "destructive"
+                              : "secondary"
+                        }
+                      >
+                        {humanizeEnum(p.status)}
+                      </Badge>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

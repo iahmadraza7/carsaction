@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
-import { getDealerProfileByUserId } from "@/lib/subscription";
+import { getDealerProfileByUserId, stripeCustomerExists } from "@/lib/subscription";
 
 function baseUrl(req: Request): string {
   return process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
@@ -28,6 +28,15 @@ export async function POST(req: Request) {
   const profile = await getDealerProfileByUserId(session.user.id);
   if (!profile?.stripeCustomerId) {
     return NextResponse.json({ error: "No billing account yet. Subscribe first." }, { status: 400 });
+  }
+
+  // A stored id can be stale (seed placeholder, deleted customer, swapped
+  // account). Opening a portal for it would 500, so check first.
+  if (!(await stripeCustomerExists(profile.stripeCustomerId))) {
+    return NextResponse.json(
+      { error: "No active billing account found. Please subscribe first." },
+      { status: 400 },
+    );
   }
 
   const stripe = getStripe();

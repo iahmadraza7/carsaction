@@ -4,8 +4,12 @@ import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { resetPasswordSchema } from "@/lib/validations/auth";
 import { hashToken } from "@/lib/tokens";
+import { enforceRateLimit } from "@/lib/rate-limit-http";
 
 export async function POST(req: Request) {
+  const limited = enforceRateLimit(req, "reset-password", 8, 15 * 60_000);
+  if (limited.response) return limited.response;
+
   let body: unknown;
   try {
     body = await req.json();

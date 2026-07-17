@@ -61,7 +61,6 @@ async function findOrCreatePrice(
   });
 
   let product: Stripe.Product;
-  let created = false;
 
   if (search.data.length > 0) {
     product = search.data[0];
@@ -72,7 +71,6 @@ async function findOrCreatePrice(
       description: plan.description,
       metadata: { carsaction_tier: plan.tier },
     });
-    created = true;
     console.log(`  Created product: ${product.id} (${product.name})`);
   }
 

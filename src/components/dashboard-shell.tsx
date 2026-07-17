@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { LogoutButton } from "@/components/auth/logout-button";
+import { BrandMark } from "@/components/brand-mark";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 export function DashboardShell({
@@ -20,11 +21,8 @@ export function DashboardShell({
     <div className="min-h-svh bg-background">
       <header className="border-b bg-card">
         <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
-          <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="inline-flex size-6 items-center justify-center rounded-md bg-primary text-xs text-primary-foreground">
-              C
-            </span>
-            CARS<span className="-ml-1 text-primary">action</span>
+          <Link href="/" className="flex items-center">
+            <BrandMark />
           </Link>
           <div className="flex items-center gap-3">
             <span className="hidden text-sm text-muted-foreground sm:inline">{email}</span>

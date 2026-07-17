@@ -2,9 +2,9 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
+import { signIn, signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
 
@@ -17,9 +17,11 @@ import { loginSchema, type LoginInput } from "@/lib/validations/auth";
 export function LoginForm({
   callbackUrl = "/",
   googleEnabled = false,
+  accountSuspended = false,
 }: {
   callbackUrl?: string;
   googleEnabled?: boolean;
+  accountSuspended?: boolean;
 }) {
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
@@ -28,6 +30,12 @@ export function LoginForm({
     handleSubmit,
     formState: { errors },
   } = useForm<LoginInput>({ resolver: zodResolver(loginSchema) });
+
+  useEffect(() => {
+    if (accountSuspended) {
+      void signOut({ redirect: false });
+    }
+  }, [accountSuspended]);
 
   async function onSubmit(values: LoginInput) {
     setSubmitting(true);

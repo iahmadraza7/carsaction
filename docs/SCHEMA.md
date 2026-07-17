@@ -15,6 +15,7 @@ passwordHash    String?
 name            String
 phone           String?
 role            Role     @default(BUYER)
+suspended       Boolean  @default(false)  // admin can lock an account without deleting it
 createdAt       DateTime @default(now())
 
 dealerProfile   DealerProfile?
@@ -122,6 +123,39 @@ monthlyPrice   Decimal              // SGD
 listingLimit   Int?                 // null = unlimited
 stripePriceId  String
 active         Boolean @default(true)
+```
+
+### Payment (subscription billing history)
+One row per Stripe invoice. Written only from webhooks
+(`invoice.payment_succeeded` / `invoice.payment_failed`), never from a redirect.
+```
+id                    String @id @default(cuid())
+dealerId              String
+stripeInvoiceId       String?  @unique
+stripePaymentIntentId String?
+amount                Decimal           // SGD
+currency              String  @default("sgd")
+status                PaymentStatus     // PAID, FAILED, REFUNDED
+tier                  Tier?
+description           String?
+periodStart           DateTime?
+periodEnd             DateTime?
+createdAt             DateTime @default(now())
+```
+
+### Sale (car-sale transaction)
+Created when a dealer marks a listing SOLD; removed if they switch it back to FOR_SALE.
+One sale per listing.
+```
+id         String @id @default(cuid())
+listingId  String @unique
+dealerId   String
+salePrice  Decimal          // SGD
+buyerName  String?
+buyerPhone String?
+notes      String?
+soldAt     DateTime @default(now())
+createdAt  DateTime @default(now())
 ```
 
 ## Milestone 2 (design now, build later)

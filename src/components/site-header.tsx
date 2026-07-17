@@ -4,6 +4,7 @@ import { HeartIcon } from "lucide-react";
 import { auth } from "@/auth";
 import { buttonVariants } from "@/components/ui/button";
 import { LogoutButton } from "@/components/auth/logout-button";
+import { BrandMark } from "@/components/brand-mark";
 
 function dashboardHref(role?: string) {
   if (role === "ADMIN") return "/admin/dashboard";
@@ -21,13 +22,8 @@ export async function SiteHeader() {
     <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
       <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
         <div className="flex items-center gap-5">
-          <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="inline-flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-              C
-            </span>
-            <span className="hidden sm:inline">
-              CARS<span className="-ml-1 text-primary">action</span>
-            </span>
+          <Link href="/" className="flex items-center">
+            <BrandMark />
           </Link>
           <Link
             href="/cars"

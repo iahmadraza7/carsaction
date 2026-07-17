@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BrandMark } from "@/components/brand-mark";
 import {
   Card,
   CardContent,
@@ -22,16 +23,8 @@ export function AuthShell({
   return (
     <main className="flex min-h-svh flex-col items-center justify-center bg-background px-4 py-10">
       <div className="w-full max-w-md">
-        <Link
-          href="/"
-          className="mb-6 flex items-center justify-center gap-2 text-lg font-semibold tracking-tight"
-        >
-          <span className="inline-flex size-7 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            C
-          </span>
-          <span>
-            CARS<span className="text-primary">action</span>
-          </span>
+        <Link href="/" className="mb-6 flex items-center justify-center">
+          <BrandMark />
         </Link>
 
         <Card className="[--card-spacing:--spacing(6)]">

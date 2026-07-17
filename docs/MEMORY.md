@@ -33,16 +33,28 @@ space, car plate listings, bulk CSV import, mobile apps.
 **2026-07-14 — Milestone 1 paid, USD 325, Payoneer. Milestone 2 will be USD 300 on Upwork.**
 Raza wants the Upwork contract to build his profile there and reduce Fiverr dependence.
 
+## Build log
+
+**2026-07-17 — Milestone 1 feature-complete (local).**
+Phases 0–5 done: auth/roles, public listings + WhatsApp/enquiries/favourites, dealer CRUD +
+uploads + Mark SOLD + listing caps, Stripe subscriptions + Payment webhook history, Sale
+records, full admin panel (users incl. suspend, dealers verify, listings edit/remove, plans,
+enquiries, unified transactions), premium landing + motion, sitemap/robots, deploy runbook.
+Still outstanding for "done in front of Macy": local E2E walkthrough, then Hostinger VPS
+deploy with Awesome Sites DNS + live Stripe webhook.
+
 ## Open questions for Macy
 
 - [ ] **Gold tier listing limit.** She never confirmed the number. Default is 10 active listings.
       Built as an admin editable value so she can change it herself. Confirm before launch.
-- [ ] **Gold and Platinum monthly prices in SGD.** Her ChatGPT thread suggested 49 / 99 / 199 / 399
-      but she has not committed. Needed to create the Stripe Products.
+- [ ] **Gold and Platinum monthly prices in SGD.** Currently seeded / Stripe test at 99 / 149.
+      Confirm before creating live Stripe products.
 - [ ] **Stripe account.** She must create it under her Singapore entity and complete verification.
       Blocker for going live. Raise this now, not at handover.
 - [ ] **Direct owner listings.** She mentioned a one time fee model like SGCM's 68 SGD per listing.
       Not in the milestone 1 scope document. Do not build. Confirm it is a later stage.
+- [ ] **Domain / DNS.** Domain is on Awesome Sites (Singapore). Point A/AAAA (and www CNAME if
+      needed) at the Hostinger VPS IP before Certbot.
 
 ## Things to watch
 
@@ -54,7 +66,3 @@ Raza wants the Upwork contract to build his profile there and reduce Fiverr depe
   Do not reopen it.
 - Her launch target was "end of July". That is not realistic for both milestones. Do not commit to it.
   Milestone 1 alone is roughly 2 to 3 weeks of solid work.
-
-## Build log
-
-(append entries here as work progresses)

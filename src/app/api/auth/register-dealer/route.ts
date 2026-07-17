@@ -3,8 +3,12 @@ import { hash } from "bcryptjs";
 
 import { prisma } from "@/lib/prisma";
 import { dealerSignupSchema } from "@/lib/validations/auth";
+import { enforceRateLimit } from "@/lib/rate-limit-http";
 
 export async function POST(req: Request) {
+  const limited = enforceRateLimit(req, "register-dealer", 5, 15 * 60_000);
+  if (limited.response) return limited.response;
+
   let body: unknown;
   try {
     body = await req.json();

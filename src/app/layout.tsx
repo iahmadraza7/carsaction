@@ -14,12 +14,18 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"),
   title: {
     default: "CARSaction — Singapore Car Marketplace",
     template: "%s",
   },
   description:
     "Buy and sell cars in Singapore. Transparent dealer subscriptions, real COE, depreciation, OMV and ARF on every listing.",
+  openGraph: {
+    type: "website",
+    siteName: "CARSaction",
+    images: [{ url: "/logo.png", width: 1024, height: 1024, alt: "CARSaction" }],
+  },
 };
 
 export default function RootLayout({

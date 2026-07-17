@@ -1,6 +1,8 @@
+import type Stripe from "stripe";
 import { Tier, SubStatus, type DealerProfile } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
+import { getStripe } from "@/lib/stripe";
 
 /**
  * A dealer can list/keep selling while ACTIVE, or PAST_DUE during the grace
@@ -43,6 +45,44 @@ export function humanizeSubStatus(status: SubStatus | null | undefined): string 
 /** Fetch the DealerProfile for a given user id (the logged-in dealer). */
 export function getDealerProfileByUserId(userId: string) {
   return prisma.dealerProfile.findUnique({ where: { userId } });
+}
+
+/** True when a stored Stripe customer id still resolves to a live customer. */
+export async function stripeCustomerExists(customerId: string): Promise<boolean> {
+  try {
+    const customer = await getStripe().customers.retrieve(customerId);
+    return !(customer as Stripe.DeletedCustomer).deleted;
+  } catch {
+    // resource_missing (deleted, placeholder seed id, or a different account).
+    return false;
+  }
+}
+
+/**
+ * Return a Stripe customer id that is guaranteed to exist in the current Stripe
+ * account, healing stale ids. Seed data ships placeholder ids like
+ * "cus_seed_dealer1" that don't exist in the real test account; a customer can
+ * also be deleted or the account swapped. In all those cases we create and
+ * persist a fresh customer instead of failing the checkout.
+ */
+export async function ensureStripeCustomerId(
+  profile: Pick<DealerProfile, "id" | "businessName" | "stripeCustomerId">,
+  opts: { email?: string | null; userId: string },
+): Promise<string> {
+  if (profile.stripeCustomerId && (await stripeCustomerExists(profile.stripeCustomerId))) {
+    return profile.stripeCustomerId;
+  }
+
+  const customer = await getStripe().customers.create({
+    email: opts.email ?? undefined,
+    name: profile.businessName,
+    metadata: { dealerProfileId: profile.id, userId: opts.userId },
+  });
+  await prisma.dealerProfile.update({
+    where: { id: profile.id },
+    data: { stripeCustomerId: customer.id },
+  });
+  return customer.id;
 }
 
 /** All active subscription plans, cheapest tier first (Gold before Platinum). */

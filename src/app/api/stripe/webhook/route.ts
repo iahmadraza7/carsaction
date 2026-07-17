@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { SubStatus } from "@prisma/client";
+import { PaymentStatus, Prisma, SubStatus } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
@@ -56,6 +56,10 @@ export async function POST(req: Request) {
         await syncSubscription(event.data.object as Stripe.Subscription);
         break;
       }
+      case "invoice.payment_succeeded": {
+        await recordPayment(event.data.object as Stripe.Invoice, PaymentStatus.PAID);
+        break;
+      }
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
         const customerId =
@@ -66,6 +70,7 @@ export async function POST(req: Request) {
             data: { subscriptionStatus: SubStatus.PAST_DUE },
           });
         }
+        await recordPayment(invoice, PaymentStatus.FAILED);
         break;
       }
       default:
@@ -132,4 +137,55 @@ async function syncSubscription(subscription: Stripe.Subscription) {
   } else {
     await prisma.dealerProfile.updateMany({ where: { stripeCustomerId: customerId }, data });
   }
+}
+
+/**
+ * Record a subscription invoice as a Payment row (billing history). Idempotent
+ * on stripeInvoiceId so Stripe retries don't create duplicates. This is the
+ * source of truth for dealer billing history and admin revenue.
+ */
+async function recordPayment(invoice: Stripe.Invoice, status: PaymentStatus) {
+  const customerId =
+    typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
+  if (!customerId || !invoice.id) return;
+
+  const dealer = await prisma.dealerProfile.findFirst({
+    where: { stripeCustomerId: customerId },
+    select: { id: true },
+  });
+  if (!dealer) return;
+
+  const line = invoice.lines?.data?.[0] as
+    | (Stripe.InvoiceLineItem & {
+        price?: { id?: string } | null;
+        pricing?: { price_details?: { price?: string } } | null;
+      })
+    | undefined;
+  const priceId = line?.price?.id ?? line?.pricing?.price_details?.price ?? null;
+  const tier = tierForPriceId(priceId);
+
+  const amountCents = status === PaymentStatus.PAID ? invoice.amount_paid : invoice.amount_due;
+  const amount = new Prisma.Decimal((amountCents ?? 0) / 100);
+
+  const paymentIntent = (invoice as unknown as { payment_intent?: string | { id?: string } })
+    .payment_intent;
+  const paymentIntentId =
+    typeof paymentIntent === "string" ? paymentIntent : (paymentIntent?.id ?? null);
+
+  await prisma.payment.upsert({
+    where: { stripeInvoiceId: invoice.id },
+    update: { status, amount, tier: tier ?? null },
+    create: {
+      dealerId: dealer.id,
+      stripeInvoiceId: invoice.id,
+      stripePaymentIntentId: paymentIntentId,
+      amount,
+      currency: invoice.currency ?? "sgd",
+      status,
+      tier,
+      description: line?.description ?? "CARSaction subscription",
+      periodStart: line?.period?.start ? new Date(line.period.start * 1000) : null,
+      periodEnd: line?.period?.end ? new Date(line.period.end * 1000) : null,
+    },
+  });
 }

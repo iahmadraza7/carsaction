@@ -25,6 +25,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const user = await prisma.user.findUnique({ where: { email } });
         if (!user || !user.passwordHash) return null;
+        if (user.suspended) return null;
 
         const valid = await compare(password, user.passwordHash);
         if (!valid) return null;
@@ -35,8 +36,52 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           email: user.email,
           image: user.image,
           role: user.role,
+          suspended: false,
         };
       },
     }),
   ],
+  callbacks: {
+    ...authConfig.callbacks,
+    async signIn({ user }) {
+      if (!user?.id) return true;
+      const dbUser = await prisma.user.findUnique({
+        where: { id: user.id },
+        select: { suspended: true },
+      });
+      if (dbUser?.suspended) return false;
+      return true;
+    },
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id as string;
+        token.role = (user.role ?? "BUYER") as typeof token.role;
+        token.suspended = Boolean(user.suspended);
+      }
+
+      // Refresh role + suspend flag from DB so admin actions take effect without
+      // waiting for a full re-login (jwt runs when the session is read).
+      if (token.id) {
+        const dbUser = await prisma.user.findUnique({
+          where: { id: token.id as string },
+          select: { suspended: true, role: true },
+        });
+        if (!dbUser || dbUser.suspended) {
+          token.suspended = true;
+        } else {
+          token.suspended = false;
+          token.role = dbUser.role;
+        }
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      if (token) {
+        session.user.id = token.id as string;
+        session.user.role = token.role as typeof session.user.role;
+        session.user.suspended = Boolean(token.suspended);
+      }
+      return session;
+    },
+  },
 });

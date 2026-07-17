@@ -22,6 +22,7 @@ import {
   FuelType,
   Transmission,
   ListingStatus,
+  PaymentStatus,
   Prisma,
 } from "@prisma/client";
 import { hash } from "bcryptjs";
@@ -66,7 +67,7 @@ async function main() {
   // ---------------------------------------------------------------------------
   // Users
   // ---------------------------------------------------------------------------
-  const admin = await prisma.user.upsert({
+  await prisma.user.upsert({
     where: { email: "admin@carsaction.sg" },
     update: { name: "CARSaction Admin", role: Role.ADMIN, passwordHash, phone: "+6560000000" },
     create: {
@@ -475,6 +476,64 @@ async function main() {
     data: { userId: buyer.id, listingId: firstListing.id },
   });
 
+  // ---------------------------------------------------------------------------
+  // Subscription billing history for the active GOLD dealer (dealer1), so the
+  // billing history + admin revenue views have data. In production these rows
+  // only ever come from Stripe webhooks.
+  // ---------------------------------------------------------------------------
+  const monthMs = 30 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const goldPayments = [
+    { monthsAgo: 2, status: PaymentStatus.PAID },
+    { monthsAgo: 1, status: PaymentStatus.PAID },
+    { monthsAgo: 0, status: PaymentStatus.PAID },
+  ];
+  for (const p of goldPayments) {
+    const start = new Date(now - p.monthsAgo * monthMs);
+    const end = new Date(start.getTime() + monthMs);
+    await prisma.payment.upsert({
+      where: { stripeInvoiceId: `in_seed_dealer1_${p.monthsAgo}` },
+      update: {},
+      create: {
+        dealerId: dealer1.id,
+        stripeInvoiceId: `in_seed_dealer1_${p.monthsAgo}`,
+        amount: new Prisma.Decimal("99.00"),
+        currency: "sgd",
+        status: p.status,
+        tier: Tier.GOLD,
+        description: "CARSaction Gold — monthly subscription",
+        periodStart: start,
+        periodEnd: end,
+        createdAt: start,
+      },
+    });
+  }
+
+  // ---------------------------------------------------------------------------
+  // One car-sale transaction: mark the newest dealer1 listing SOLD with a Sale.
+  // ---------------------------------------------------------------------------
+  const soldListing = await prisma.listing.findFirstOrThrow({
+    where: { dealerId: dealer1.id, id: { not: firstListing.id } },
+    orderBy: { createdAt: "desc" },
+  });
+  await prisma.listing.update({
+    where: { id: soldListing.id },
+    data: { status: ListingStatus.SOLD },
+  });
+  await prisma.sale.upsert({
+    where: { listingId: soldListing.id },
+    update: {},
+    create: {
+      listingId: soldListing.id,
+      dealerId: dealer1.id,
+      salePrice: soldListing.price,
+      buyerName: "Jonathan Lim",
+      buyerPhone: "+6588990011",
+      notes: "Sold at asking. Full payment via bank transfer.",
+      soldAt: new Date(now - 5 * 24 * 60 * 60 * 1000),
+    },
+  });
+
   const counts = {
     users: await prisma.user.count(),
     dealerProfiles: await prisma.dealerProfile.count(),
@@ -483,6 +542,8 @@ async function main() {
     subscriptionPlans: await prisma.subscriptionPlan.count(),
     enquiries: await prisma.enquiry.count(),
     favourites: await prisma.favourite.count(),
+    payments: await prisma.payment.count(),
+    sales: await prisma.sale.count(),
   };
 
   console.log("Seed complete:", counts);

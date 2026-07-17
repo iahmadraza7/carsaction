@@ -5,6 +5,7 @@ import { SearchXIcon } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import { SiteHeader } from "@/components/site-header";
 import { ListingCard, type ListingCardData } from "@/components/listings/listing-card";
+import { Reveal } from "@/components/motion/reveal";
 import { Filters } from "@/components/listings/filters";
 import { MobileFilters } from "@/components/listings/mobile-filters";
 import { SortSelect } from "@/components/listings/sort-select";
@@ -205,8 +206,10 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
             ) : (
               <>
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {listings.map((l) => (
-                    <ListingCard key={l.id} listing={l} />
+                  {listings.map((l, i) => (
+                    <Reveal key={l.id} y={16} duration={0.5} delay={(i % 3) * 0.06}>
+                      <ListingCard listing={l} />
+                    </Reveal>
                   ))}
                 </div>
                 <div className="mt-8">

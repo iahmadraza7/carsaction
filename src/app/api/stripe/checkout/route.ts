@@ -3,9 +3,12 @@ import { z } from "zod";
 import { Tier } from "@prisma/client";
 
 import { auth } from "@/auth";
-import { prisma } from "@/lib/prisma";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
-import { priceIdForTier, getDealerProfileByUserId } from "@/lib/subscription";
+import {
+  priceIdForTier,
+  getDealerProfileByUserId,
+  ensureStripeCustomerId,
+} from "@/lib/subscription";
 
 const bodySchema = z.object({
   tier: z.nativeEnum(Tier),
@@ -52,20 +55,11 @@ export async function POST(req: Request) {
 
   const stripe = getStripe();
 
-  // Reuse an existing Stripe customer, or create one and persist its id.
-  let customerId = profile.stripeCustomerId;
-  if (!customerId) {
-    const customer = await stripe.customers.create({
-      email: session.user.email ?? undefined,
-      name: profile.businessName,
-      metadata: { dealerProfileId: profile.id, userId: session.user.id },
-    });
-    customerId = customer.id;
-    await prisma.dealerProfile.update({
-      where: { id: profile.id },
-      data: { stripeCustomerId: customerId },
-    });
-  }
+  // Resolve a valid Stripe customer, healing any stale/placeholder id.
+  const customerId = await ensureStripeCustomerId(profile, {
+    email: session.user.email,
+    userId: session.user.id,
+  });
 
   const base = baseUrl(req);
   const checkout = await stripe.checkout.sessions.create({

@@ -17,6 +17,13 @@ export default auth((req) => {
   const path = nextUrl.pathname;
   const session = req.auth;
 
+  // Suspended accounts cannot use protected dashboards.
+  if (session?.user?.suspended) {
+    const loginUrl = new URL("/login", nextUrl);
+    loginUrl.searchParams.set("error", "suspended");
+    return Response.redirect(loginUrl);
+  }
+
   for (const guard of GUARDS) {
     const inScope = path === guard.prefix || path.startsWith(`${guard.prefix}/`);
     if (!inScope) continue;
