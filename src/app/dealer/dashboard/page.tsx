@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { CheckCircle2Icon, PlusIcon } from "lucide-react";
@@ -21,7 +21,7 @@ import {
   isSubscriptionActive,
 } from "@/lib/subscription";
 
-export const metadata: Metadata = { title: "Dealer dashboard — CARSaction" };
+export const metadata: Metadata = { title: "Dealer dashboard | CARSaction" };
 
 export default async function DealerDashboardPage({
   searchParams,
@@ -80,7 +80,7 @@ export default async function DealerDashboardPage({
         {checkout === "success" ? (
           <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-4 py-3 text-sm font-medium text-primary">
             <CheckCircle2Icon className="size-4" />
-            Payment received. Your subscription is being activated — refresh in a moment if it
+            Payment received. Your subscription is being activated. Refresh in a moment if it
             isn&apos;t shown yet.
           </div>
         ) : null}
@@ -94,10 +94,10 @@ export default async function DealerDashboardPage({
           </CardHeader>
           <CardContent className="flex flex-col gap-4 text-sm">
             <div className="grid grid-cols-2 gap-3">
-              <Field label="Plan" value={currentPlan ? currentPlan.name : "—"} />
+              <Field label="Plan" value={currentPlan ? currentPlan.name : "n/a"} />
               <Field
                 label="Monthly price"
-                value={currentPlan ? `${formatPrice(Number(currentPlan.monthlyPrice))}/mo` : "—"}
+                value={currentPlan ? `${formatPrice(Number(currentPlan.monthlyPrice))}/mo` : "n/a"}
               />
               <Field
                 label="Listings used"
@@ -140,7 +140,7 @@ export default async function DealerDashboardPage({
                     <SubscribeButton
                       key={plan.id}
                       tier={plan.tier}
-                      label={`Subscribe — ${plan.name}`}
+                      label={`Subscribe to ${plan.name}`}
                       variant={plan.tier === "PLATINUM" ? "default" : "outline"}
                     />
                   ))}

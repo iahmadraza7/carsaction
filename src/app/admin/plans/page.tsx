@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
 import { auth } from "@/auth";
@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { AdminShell } from "@/components/admin/admin-shell";
 import { PlanEditor } from "@/components/admin/plan-editor";
 
-export const metadata: Metadata = { title: "Plans — Admin" };
+export const metadata: Metadata = { title: "Plans | Admin" };
 
 export default async function AdminPlansPage() {
   const session = await auth();

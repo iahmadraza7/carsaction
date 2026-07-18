@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import {
@@ -19,7 +19,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { formatPrice, formatDate } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Admin overview — CARSaction" };
+export const metadata: Metadata = { title: "Admin overview | CARSaction" };
 
 export default async function AdminDashboardPage() {
   const session = await auth();

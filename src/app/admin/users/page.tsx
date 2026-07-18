@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { SearchIcon } from "lucide-react";
 import { Prisma } from "@prisma/client";
@@ -11,7 +11,7 @@ import { SuspendToggle } from "@/components/admin/suspend-toggle";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Users — Admin" };
+export const metadata: Metadata = { title: "Users | Admin" };
 
 export default async function AdminUsersPage({
   searchParams,
@@ -72,7 +72,7 @@ export default async function AdminUsersPage({
               <tr key={u.id} className={u.suspended ? "bg-muted/30" : undefined}>
                 <td className="px-4 py-2.5">
                   <div className="flex items-center gap-2 font-medium">
-                    {u.name ?? "—"}
+                    {u.name ?? "n/a"}
                     {u.suspended ? <Badge variant="destructive">Suspended</Badge> : null}
                   </div>
                   {u.dealerProfile ? (

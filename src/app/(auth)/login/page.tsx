@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -7,7 +7,7 @@ import { googleEnabled } from "@/auth.config";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { LoginForm } from "@/components/auth/login-form";
 
-export const metadata: Metadata = { title: "Sign in — CARSaction" };
+export const metadata: Metadata = { title: "Sign in | CARSaction" };
 
 export default async function LoginPage({
   searchParams,

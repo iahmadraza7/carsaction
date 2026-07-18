@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import type { Metadata } from "next";
 import {
   ShieldCheckIcon,
@@ -22,14 +22,16 @@ import { ScrollHero } from "@/components/motion/scroll-hero";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { buttonVariants } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
+import { BrandChips } from "@/components/listings/brand-chips";
+import { HomeSearch } from "@/components/listings/home-search";
 import { formatPrice } from "@/lib/format";
 
 export const metadata: Metadata = {
-  title: "CARSaction — Singapore's transparent car marketplace",
+  title: "CARSaction | Singapore's transparent car marketplace",
   description:
     "Buy and sell cars in Singapore the transparent way. Every listing shows COE expiry, depreciation, OMV and ARF. Flat monthly dealer subscriptions, no per-car fees.",
   openGraph: {
-    title: "CARSaction — Singapore's transparent car marketplace",
+    title: "CARSaction | Singapore's transparent car marketplace",
     description:
       "Every listing shows COE, depreciation, OMV and ARF. Flat dealer subscriptions, no per-car fees.",
   },
@@ -43,6 +45,7 @@ const HERO_IMAGES = [
   hero("1503376780353-7e6692767b70"),
   hero("1519641471654-76ce0107ad1b"),
   hero("1580273916550-e323be2ae537"),
+  hero("1542362567-b07e5437d68a"),
 ];
 
 function dashboardHref(role?: string) {
@@ -57,7 +60,7 @@ export default async function Home() {
   const user = session?.user;
   const dash = dashboardHref(user?.role);
 
-  const [featuredRaw, liveCount, dealerCount, plans] = await Promise.all([
+  const [featuredRaw, liveCount, dealerCount, plans, makeRows] = await Promise.all([
     prisma.listing.findMany({
       where: { status: ListingStatus.FOR_SALE },
       orderBy: { createdAt: "desc" },
@@ -67,7 +70,15 @@ export default async function Home() {
     prisma.listing.count({ where: { status: ListingStatus.FOR_SALE } }),
     prisma.dealerProfile.count({ where: { subscriptionStatus: SubStatus.ACTIVE } }),
     prisma.subscriptionPlan.findMany({ where: { active: true }, orderBy: { monthlyPrice: "asc" } }),
+    prisma.listing.findMany({
+      where: { status: ListingStatus.FOR_SALE },
+      distinct: ["make"],
+      select: { make: true },
+      orderBy: { make: "asc" },
+    }),
   ]);
+
+  const makes = makeRows.map((r) => r.make);
 
   const featured: ListingCardData[] = featuredRaw.map((l) => ({
     id: l.id,
@@ -96,12 +107,16 @@ export default async function Home() {
           </h1>
           <p className="mt-5 max-w-xl text-base text-pretty text-white/80 sm:text-lg">
             Flat monthly dealer subscriptions instead of per-car fees. Every listing shows COE
-            expiry, depreciation, OMV and ARF — the numbers Singapore buyers actually compare.
+            expiry, depreciation, OMV and ARF: the numbers Singapore buyers actually compare.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Link
               href="/cars"
-              className={buttonVariants({ size: "lg", className: "shadow-lg" })}
+              className={buttonVariants({
+                size: "lg",
+                className:
+                  "shadow-lg shadow-primary/40 transition-transform duration-300 hover:scale-[1.03] hover:shadow-primary/55",
+              })}
             >
               Browse cars
               <ArrowRightIcon />
@@ -135,12 +150,33 @@ export default async function Home() {
         </div>
       </ScrollHero>
 
+      {/* Search + brands (below hero, no overlap with marquee) */}
+      <section className="border-b bg-background px-4 py-10 sm:py-12">
+        <div className="mx-auto max-w-6xl">
+          <HomeSearch makes={makes} />
+          {makes.length > 0 ? (
+            <div className="mx-auto mt-6 max-w-4xl">
+              <p className="mb-2 text-center text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                Explore brands
+              </p>
+              <BrandChips makes={makes} className="justify-center" />
+            </div>
+          ) : null}
+        </div>
+      </section>
+
       {/* Stats band */}
       <section className="border-y bg-card">
         <div className="mx-auto grid max-w-6xl grid-cols-3 gap-4 px-4 py-10 text-center">
-          <Stat value={<AnimatedCounter value={liveCount} />} label="Cars listed" />
-          <Stat value={<AnimatedCounter value={dealerCount} />} label="Active dealers" />
-          <Stat value={<>4</>} label="SG figures on every car" sub="COE · Depr · OMV · ARF" />
+          <Reveal delay={0}>
+            <Stat value={<AnimatedCounter value={liveCount} />} label="Cars listed" />
+          </Reveal>
+          <Reveal delay={0.08}>
+            <Stat value={<AnimatedCounter value={dealerCount} />} label="Active dealers" />
+          </Reveal>
+          <Reveal delay={0.16}>
+            <Stat value={<>4</>} label="SG figures on every car" sub="COE · Depr · OMV · ARF" />
+          </Reveal>
         </div>
       </section>
 
@@ -160,7 +196,7 @@ export default async function Home() {
             <Feature
               icon={<ReceiptTextIcon />}
               title="Every number, up front"
-              body="COE expiry, depreciation per year, OMV and ARF on every listing — the figures that decide a deal in Singapore."
+              body="COE expiry, depreciation per year, OMV and ARF on every listing: the figures that decide a deal in Singapore."
             />
           </Reveal>
           <Reveal delay={0.1}>
@@ -224,7 +260,7 @@ export default async function Home() {
             {
               icon: <MessageCircleIcon />,
               title: "Message the dealer",
-              body: "WhatsApp the dealer directly from any listing, or send an enquiry — no account needed.",
+              body: "WhatsApp the dealer directly from any listing, or send an enquiry. No account needed.",
             },
             {
               icon: <HandshakeIcon />,
@@ -330,7 +366,7 @@ export default async function Home() {
                 Repossessed vehicle bidding
               </h2>
               <p className="mt-3 text-background/70">
-                Finance companies will list repossessed vehicles and dealers will bid — a
+                Finance companies will list repossessed vehicles and dealers will bid in a
                 transparent, deadline-based process. Launching in our next milestone.
               </p>
             </div>
@@ -343,7 +379,7 @@ export default async function Home() {
         <div className="mx-auto w-full max-w-6xl px-4 py-20 text-center">
           <Reveal>
             <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-balance sm:text-4xl">
-              Ready to find your next car — or sell your lot?
+              Ready to find your next car, or sell your lot?
             </h2>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/cars" className={buttonVariants({ size: "lg" })}>

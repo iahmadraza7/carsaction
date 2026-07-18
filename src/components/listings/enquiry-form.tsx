@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { useForm } from "react-hook-form";
@@ -44,7 +44,7 @@ export function EnquiryForm({
       if (!res.ok) throw new Error();
       setSent(true);
       reset({ name: defaultName, phone: defaultPhone, message: "" });
-      toast.success("Enquiry sent — the dealer will be in touch.");
+      toast.success("Enquiry sent. The dealer will be in touch.");
     } catch {
       toast.error("Could not send your enquiry. Please try again.");
     }

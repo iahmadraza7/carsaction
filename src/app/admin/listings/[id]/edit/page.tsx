@@ -7,7 +7,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { ListingForm } from "@/components/dealer/listing-form";
 import type { ListingFormValues } from "@/lib/validations/listing";
 
-export const metadata: Metadata = { title: "Edit listing — Admin" };
+export const metadata: Metadata = { title: "Edit listing | Admin" };
 
 function toDateInput(date: Date | null): string {
   if (!date) return "";

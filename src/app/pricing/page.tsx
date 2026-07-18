@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import type { Metadata } from "next";
 import { CheckIcon } from "lucide-react";
 import { Tier } from "@prisma/client";
@@ -13,7 +13,7 @@ import { getActivePlans, getDealerProfileByUserId, isSubscriptionActive } from "
 import { isStripeConfigured } from "@/lib/stripe";
 
 export const metadata: Metadata = {
-  title: "Pricing — CARSaction dealer subscriptions",
+  title: "Pricing | CARSaction dealer subscriptions",
   description:
     "Transparent flat monthly subscriptions for Singapore car dealers. Gold and Platinum plans, no per-listing fees, cancel anytime.",
 };
@@ -68,7 +68,7 @@ export default async function PricingPage({
 
         {checkout === "cancelled" ? (
           <p className="mx-auto mt-6 w-fit rounded-lg bg-accent px-4 py-2 text-sm text-accent-foreground">
-            Checkout cancelled — you haven&apos;t been charged.
+            Checkout cancelled. You haven&apos;t been charged.
           </p>
         ) : null}
 

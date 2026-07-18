@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 import { PaymentStatus, Prisma, SubStatus } from "@prisma/client";
 
@@ -7,7 +7,7 @@ import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { tierForPriceId } from "@/lib/subscription";
 
 /**
- * Stripe webhook. This is the ONLY place subscription state is trusted — never
+ * Stripe webhook. This is the ONLY place subscription state is trusted; never
  * the browser redirect. Verifies the signature, then syncs DealerProfile.
  *
  * Test locally with:
@@ -114,7 +114,7 @@ async function syncSubscription(subscription: Stripe.Subscription) {
   const status = mapStatus(subscription.status);
 
   // `current_period_end` lives on the subscription item in newer API versions
-  // and on the subscription itself in older ones — read whichever is present.
+  // and on the subscription itself in older ones; read whichever is present.
   const item = subscription.items.data[0] as unknown as { current_period_end?: number } | undefined;
   const periodEndUnix =
     item?.current_period_end ??

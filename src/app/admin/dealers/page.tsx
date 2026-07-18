@@ -1,4 +1,4 @@
-import { redirect } from "next/navigation";
+﻿import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { SubStatus } from "@prisma/client";
 
@@ -9,7 +9,7 @@ import { VerifyToggle } from "@/components/admin/verify-toggle";
 import { Badge } from "@/components/ui/badge";
 import { humanizeSubStatus } from "@/lib/subscription";
 
-export const metadata: Metadata = { title: "Dealers — Admin" };
+export const metadata: Metadata = { title: "Dealers | Admin" };
 
 export default async function AdminDealersPage() {
   const session = await auth();

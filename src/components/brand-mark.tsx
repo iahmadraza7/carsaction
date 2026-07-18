@@ -1,51 +1,48 @@
+import Image from "next/image";
+
 import { cn } from "@/lib/utils";
 
 /**
- * CARSaction wordmark. A speed-slashed "C" badge plus the wordmark, drawn as
- * inline SVG/markup so it stays crisp at any size and needs no image request.
+ * CARSaction brand mark using the official logo asset (public/logo.png).
+ * The PNG already includes the wordmark + tagline.
  */
 export function BrandMark({
   className,
   showWordmark = true,
+  compact = false,
 }: {
   className?: string;
+  /** Kept for API compatibility; the PNG already includes the wordmark. */
   showWordmark?: boolean;
+  compact?: boolean;
 }) {
+  void showWordmark;
   return (
-    <span className={cn("inline-flex items-center gap-2", className)}>
-      <BrandGlyph className="size-7" />
-      {showWordmark ? (
-        <span className="text-lg font-bold tracking-tight text-foreground">
-          CARS<span className="text-primary">action</span>
-        </span>
-      ) : null}
+    <span className={cn("inline-flex items-center", className)}>
+      <Image
+        src="/logo.png"
+        alt="CARSaction"
+        width={compact ? 200 : 280}
+        height={compact ? 64 : 90}
+        priority
+        className={cn(
+          "h-14 w-auto object-contain object-left sm:h-16",
+          compact && "h-11 sm:h-12",
+        )}
+      />
     </span>
   );
 }
 
+/** Small square mark for tight spots (uses the same logo). */
 export function BrandGlyph({ className }: { className?: string }) {
   return (
-    <svg
-      viewBox="0 0 32 32"
-      role="img"
-      aria-label="CARSaction"
-      className={cn("shrink-0", className)}
-    >
-      <rect width="32" height="32" rx="8" fill="var(--primary)" />
-      <path
-        d="M21.5 11.2a7 7 0 1 0 0 9.6"
-        fill="none"
-        stroke="var(--primary-foreground)"
-        strokeWidth="2.6"
-        strokeLinecap="round"
-      />
-      <path
-        d="M23 13.2h4.5M21.5 16h6M23 18.8h4.5"
-        stroke="var(--primary-foreground)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        opacity="0.9"
-      />
-    </svg>
+    <Image
+      src="/logo.png"
+      alt="CARSaction"
+      width={40}
+      height={40}
+      className={cn("size-10 shrink-0 object-contain", className)}
+    />
   );
 }

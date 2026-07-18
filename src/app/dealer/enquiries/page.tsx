@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { PhoneIcon, MessageSquareIcon } from "lucide-react";
@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
 import { getDealerProfileByUserId } from "@/lib/subscription";
 
-export const metadata: Metadata = { title: "Enquiries — CARSaction" };
+export const metadata: Metadata = { title: "Enquiries | CARSaction" };
 
 export default async function DealerEnquiriesPage() {
   const session = await auth();

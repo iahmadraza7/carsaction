@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { PhoneIcon } from "lucide-react";
@@ -9,7 +9,7 @@ import { AdminShell } from "@/components/admin/admin-shell";
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Enquiries — Admin" };
+export const metadata: Metadata = { title: "Enquiries | Admin" };
 
 export default async function AdminEnquiriesPage() {
   const session = await auth();
@@ -64,7 +64,7 @@ export default async function AdminEnquiriesPage() {
                   </div>
                 </td>
                 <td className="hidden max-w-xs px-4 py-2.5 text-muted-foreground sm:table-cell">
-                  {e.message ?? "—"}
+                  {e.message ?? "n/a"}
                 </td>
                 <td className="px-4 py-2.5 text-muted-foreground">{formatDate(e.createdAt)}</td>
               </tr>

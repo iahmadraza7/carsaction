@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
   });
   if (!listing) return { title: "Car not found" };
 
-  const title = `${listing.title} — ${formatPrice(Number(listing.price))}`;
+  const title = `${listing.title} · ${formatPrice(Number(listing.price))}`;
   const description = `${listing.year} ${listing.make} ${listing.model} for sale in Singapore at ${formatPrice(Number(listing.price))}. View photos, full specs and WhatsApp the dealer on CARSaction.`;
   const image = listing.images[0]?.url;
 
@@ -157,7 +157,7 @@ export default async function ListingDetailPage({ params }: { params: Params }) 
           <div className="min-w-0 space-y-8">
             <Gallery images={images} title={listing.title} />
 
-            {/* COE highlight — SG buyers check this first */}
+            {/* COE highlight: SG buyers check this first */}
             {listing.coeExpiry ? (
               <div className="flex items-center gap-3 rounded-xl bg-primary/10 px-4 py-3 ring-1 ring-primary/20">
                 <CalendarClockIcon className="size-5 shrink-0 text-primary" />
@@ -177,23 +177,23 @@ export default async function ListingDetailPage({ params }: { params: Params }) 
               <dl className="rounded-xl bg-card px-4 ring-1 ring-foreground/10">
                 <SpecRow label="Make" value={listing.make} />
                 <SpecRow label="Model" value={listing.model} />
-                <SpecRow label="Variant" value={listing.variant || "—"} />
+                <SpecRow label="Variant" value={listing.variant || "n/a"} />
                 <SpecRow label="Year" value={listing.year} />
                 <SpecRow label="Mileage" value={formatMileage(listing.mileage)} />
                 <SpecRow
                   label="Engine capacity"
-                  value={listing.engineCc ? `${listing.engineCc.toLocaleString()} cc` : "—"}
+                  value={listing.engineCc ? `${listing.engineCc.toLocaleString()} cc` : "n/a"}
                 />
                 <SpecRow label="Transmission" value={humanizeEnum(listing.transmission)} />
                 <SpecRow label="Fuel type" value={humanizeEnum(listing.fuelType)} />
                 <SpecRow label="Body type" value={humanizeEnum(listing.bodyType)} />
-                <SpecRow label="Colour" value={listing.colour || "—"} />
+                <SpecRow label="Colour" value={listing.colour || "n/a"} />
                 <SpecRow
                   label="Registration date"
-                  value={listing.regDate ? formatDate(listing.regDate) : "—"}
+                  value={listing.regDate ? formatDate(listing.regDate) : "n/a"}
                 />
-                <SpecRow label="OMV" value={omv != null ? formatPrice(omv) : "—"} />
-                <SpecRow label="ARF" value={arf != null ? formatPrice(arf) : "—"} />
+                <SpecRow label="OMV" value={omv != null ? formatPrice(omv) : "n/a"} />
+                <SpecRow label="ARF" value={arf != null ? formatPrice(arf) : "n/a"} />
               </dl>
             </section>
 

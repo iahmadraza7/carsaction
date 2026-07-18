@@ -1,4 +1,4 @@
-import Stripe from "stripe";
+﻿import Stripe from "stripe";
 
 /**
  * True when the Stripe secret key is present. Used to short-circuit billing
@@ -19,7 +19,7 @@ export function getStripe(): Stripe {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) {
     throw new Error(
-      "Stripe is not configured. Set STRIPE_SECRET_KEY (and the Price IDs) in .env — see .env.example.",
+      "Stripe is not configured. Set STRIPE_SECRET_KEY (and the Price IDs) in .env. See .env.example.",
     );
   }
   if (!client) {

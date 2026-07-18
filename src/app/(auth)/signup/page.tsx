@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -7,7 +7,7 @@ import { googleEnabled } from "@/auth.config";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { SignupForm } from "@/components/auth/signup-form";
 
-export const metadata: Metadata = { title: "Create account — CARSaction" };
+export const metadata: Metadata = { title: "Create account | CARSaction" };
 
 export default async function SignupPage() {
   const session = await auth();

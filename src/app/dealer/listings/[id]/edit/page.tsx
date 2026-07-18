@@ -8,7 +8,7 @@ import { ListingForm } from "@/components/dealer/listing-form";
 import { getDealerProfileByUserId } from "@/lib/subscription";
 import type { ListingFormValues } from "@/lib/validations/listing";
 
-export const metadata: Metadata = { title: "Edit listing — CARSaction" };
+export const metadata: Metadata = { title: "Edit listing | CARSaction" };
 
 function toDateInput(date: Date | null): string {
   if (!date) return "";

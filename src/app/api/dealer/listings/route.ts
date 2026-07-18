@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -7,7 +7,7 @@ import { listingSchema } from "@/lib/validations/listing";
 import { listingDataFromInput } from "@/lib/listing-write";
 
 // Create a listing. DEALER-only. Server enforces the subscription/limit rules
-// (canCreateListing) — the UI hiding the button is not the security boundary.
+// (canCreateListing); the UI hiding the button is not the security boundary.
 export async function POST(req: Request) {
   const session = await auth();
   if (!session?.user) {

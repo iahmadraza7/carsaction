@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { PaymentStatus } from "@prisma/client";
@@ -12,7 +12,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { formatPrice, formatDate } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Transactions — Admin" };
+export const metadata: Metadata = { title: "Transactions | Admin" };
 
 type Row =
   | {

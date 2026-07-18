@@ -1,10 +1,10 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import type { Metadata } from "next";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { ResetPasswordForm } from "@/components/auth/reset-password-form";
 
-export const metadata: Metadata = { title: "Reset password — CARSaction" };
+export const metadata: Metadata = { title: "Reset password | CARSaction" };
 
 export default async function ResetPasswordPage({
   searchParams,

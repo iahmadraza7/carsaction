@@ -1,4 +1,4 @@
-import type Stripe from "stripe";
+﻿import type Stripe from "stripe";
 import { Tier, SubStatus, type DealerProfile } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
@@ -6,7 +6,7 @@ import { getStripe } from "@/lib/stripe";
 
 /**
  * A dealer can list/keep selling while ACTIVE, or PAST_DUE during the grace
- * period (they keep existing listings visible but cannot add new ones — that
+ * period (they keep existing listings visible but cannot add new ones; that
  * distinction is enforced by `canCreateListing`).
  */
 export function isSubscriptionActive(status: SubStatus | null | undefined): boolean {

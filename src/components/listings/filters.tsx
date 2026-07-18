@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -42,6 +42,8 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
   const [yearMin, setYearMin] = React.useState(params.get("yearMin") ?? "");
   const [yearMax, setYearMax] = React.useState(params.get("yearMax") ?? "");
   const [mileageMax, setMileageMax] = React.useState(params.get("mileageMax") ?? "");
+  const [deprMax, setDeprMax] = React.useState(params.get("deprMax") ?? "");
+  const [coeYearsMin, setCoeYearsMin] = React.useState(params.get("coeYearsMin") ?? "");
   const [bodyType, setBodyType] = React.useState(params.get("bodyType") ?? "");
   const [fuelType, setFuelType] = React.useState(params.get("fuelType") ?? "");
   const [transmission, setTransmission] = React.useState(params.get("transmission") ?? "");
@@ -69,6 +71,8 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
     set("yearMin", yearMin);
     set("yearMax", yearMax);
     set("mileageMax", mileageMax);
+    set("deprMax", deprMax);
+    set("coeYearsMin", coeYearsMin);
     set("bodyType", bodyType);
     set("fuelType", fuelType);
     set("transmission", transmission);
@@ -88,6 +92,8 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
     setYearMin("");
     setYearMax("");
     setMileageMax("");
+    setDeprMax("");
+    setCoeYearsMin("");
     setBodyType("");
     setFuelType("");
     setTransmission("");
@@ -139,7 +145,7 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
             value={priceMin}
             onChange={(e) => setPriceMin(e.target.value)}
           />
-          <span className="text-muted-foreground">–</span>
+          <span className="text-muted-foreground">-</span>
           <input
             className={controlClass}
             type="number"
@@ -162,7 +168,7 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
             value={yearMin}
             onChange={(e) => setYearMin(e.target.value)}
           />
-          <span className="text-muted-foreground">–</span>
+          <span className="text-muted-foreground">-</span>
           <input
             className={controlClass}
             type="number"
@@ -184,6 +190,33 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
           value={mileageMax}
           onChange={(e) => setMileageMax(e.target.value)}
         />
+      </Field>
+
+      <Field label="Max depreciation (S$/yr)">
+        <input
+          className={controlClass}
+          type="number"
+          inputMode="numeric"
+          min={0}
+          placeholder="e.g. 15000"
+          value={deprMax}
+          onChange={(e) => setDeprMax(e.target.value)}
+        />
+      </Field>
+
+      <Field label="COE left (min years)">
+        <select
+          className={controlClass}
+          value={coeYearsMin}
+          onChange={(e) => setCoeYearsMin(e.target.value)}
+        >
+          <option value="">Any</option>
+          <option value="1">At least 1 year</option>
+          <option value="2">At least 2 years</option>
+          <option value="3">At least 3 years</option>
+          <option value="5">At least 5 years</option>
+          <option value="7">At least 7 years</option>
+        </select>
       </Field>
 
       <Field label="Body type">

@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
@@ -14,7 +14,7 @@ import { buttonVariants } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
 import { getDealerProfileByUserId, canCreateListing } from "@/lib/subscription";
 
-export const metadata: Metadata = { title: "My listings — CARSaction" };
+export const metadata: Metadata = { title: "My listings | CARSaction" };
 
 export default async function DealerListingsPage() {
   const session = await auth();

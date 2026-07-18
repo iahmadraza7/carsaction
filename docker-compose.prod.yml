@@ -1,7 +1,9 @@
-# Production stack for Hostinger VPS.
-# App + Postgres on an internal Docker network. Only the app is published on
-# 127.0.0.1:3000 so Nginx (on the host) can reverse-proxy + terminate TLS.
+# Production stack for Hostinger VPS (beside HomeGPT / other sites).
+# App + Postgres on an internal Docker network.
+# App is published ONLY on 127.0.0.1:8100 (HomeGPT uses 8000 — do not collide).
 # Postgres is NEVER exposed to the public internet.
+#
+# Start with: docker compose -p carsaction -f docker-compose.prod.yml --env-file .env up -d --build
 
 services:
   db:
@@ -32,14 +34,14 @@ services:
       db:
         condition: service_healthy
     env_file:
-      - .env.production
+      - .env
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER:-carsaction}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-carsaction}?schema=public
       HOSTNAME: 0.0.0.0
       PORT: "3000"
       AUTH_TRUST_HOST: "true"
     ports:
-      - "127.0.0.1:3000:3000"
+      - "127.0.0.1:8100:3000"
     volumes:
       - carsaction_uploads:/app/public/uploads
     networks:

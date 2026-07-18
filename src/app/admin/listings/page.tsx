@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import Image from "next/image";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
 import { formatPrice } from "@/lib/format";
 
-export const metadata: Metadata = { title: "Listings — Admin" };
+export const metadata: Metadata = { title: "Listings | Admin" };
 
 export default async function AdminListingsPage({
   searchParams,

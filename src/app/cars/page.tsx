@@ -8,6 +8,7 @@ import { ListingCard, type ListingCardData } from "@/components/listings/listing
 import { Reveal } from "@/components/motion/reveal";
 import { Filters } from "@/components/listings/filters";
 import { MobileFilters } from "@/components/listings/mobile-filters";
+import { BrandChips } from "@/components/listings/brand-chips";
 import { SortSelect } from "@/components/listings/sort-select";
 import { Pagination } from "@/components/listings/pagination";
 import { buttonVariants } from "@/components/ui/button";
@@ -23,7 +24,7 @@ import type { Prisma } from "@prisma/client";
 export const metadata: Metadata = {
   title: "Browse used cars for sale in Singapore",
   description:
-    "Browse verified used cars for sale in Singapore. Filter by make, model, price, year and mileage, and WhatsApp the dealer directly.",
+    "Browse verified used cars for sale in Singapore. Filter by make, price, depreciation, COE left, year and mileage, and WhatsApp the dealer directly.",
 };
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -46,6 +47,8 @@ const FILTER_KEYS = [
   "yearMin",
   "yearMax",
   "mileageMax",
+  "deprMax",
+  "coeYearsMin",
   "bodyType",
   "fuelType",
   "transmission",
@@ -61,6 +64,8 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
   const yearMin = toInt(one(sp.yearMin));
   const yearMax = toInt(one(sp.yearMax));
   const mileageMax = toInt(one(sp.mileageMax));
+  const deprMax = toInt(one(sp.deprMax));
+  const coeYearsMin = toInt(one(sp.coeYearsMin));
   const bodyType = one(sp.bodyType);
   const fuelType = one(sp.fuelType);
   const transmission = one(sp.transmission);
@@ -81,6 +86,12 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
     if (yearMax != null) where.year.lte = yearMax;
   }
   if (mileageMax != null) where.mileage = { lte: mileageMax };
+  if (deprMax != null) where.depreciation = { lte: deprMax };
+  if (coeYearsMin != null && coeYearsMin > 0) {
+    const coeCutoff = new Date();
+    coeCutoff.setFullYear(coeCutoff.getFullYear() + coeYearsMin);
+    where.coeExpiry = { gte: coeCutoff };
+  }
   if (isBodyType(bodyType)) where.bodyType = bodyType;
   if (isFuelType(fuelType)) where.fuelType = fuelType;
   if (isTransmission(transmission)) where.transmission = transmission;
@@ -159,6 +170,12 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
           <p className="mt-1 text-sm text-muted-foreground">
             {total} {total === 1 ? "car" : "cars"} available in Singapore
           </p>
+          <div className="mt-4">
+            <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
+              Browse by brand
+            </p>
+            <BrandChips makes={makes} activeMake={make || undefined} />
+          </div>
         </div>
 
         <div className="flex gap-8">
@@ -193,8 +210,8 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
                 </div>
                 <h3 className="text-lg font-semibold">No cars match your filters</h3>
                 <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-                  Try widening your price or year range, raising the mileage limit, or
-                  clearing a filter or two.
+                  Try widening price or year, raising mileage or depreciation limits,
+                  lowering COE years left, or clearing a filter or two.
                 </p>
                 <Link
                   href="/cars"

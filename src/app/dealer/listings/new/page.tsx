@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 
@@ -8,7 +8,7 @@ import { ListingForm } from "@/components/dealer/listing-form";
 import { buttonVariants } from "@/components/ui/button";
 import { getDealerProfileByUserId, canCreateListing } from "@/lib/subscription";
 
-export const metadata: Metadata = { title: "New listing — CARSaction" };
+export const metadata: Metadata = { title: "New listing | CARSaction" };
 
 export default async function NewListingPage() {
   const session = await auth();
