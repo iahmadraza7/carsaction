@@ -38,24 +38,27 @@ Repo: https://github.com/iahmadraza7/carsaction
 
 ---
 
-## 1. DNS on Awesome Sites (before Certbot)
+## 1. DNS on Cloudflare (Awesome Sites uses Cloudflare nameservers)
 
-In [Awesome Sites domains](https://awesomesites.org/customer/clientarea.php?action=domains) → **carsaction.sg** → DNS zone:
+Awesome Sites does **not** host the zone records when nameservers point at Cloudflare. Add records in the [Cloudflare dashboard](https://dash.cloudflare.com) → domain **carsaction.sg** → **DNS** → **Records**:
 
-| Type | Host | Value | TTL |
-|------|------|-------|-----|
-| A | `@` | `187.77.148.141` | 300 |
-| A | `www` | `187.77.148.141` | 300 |
+| Type | Name | Content | Proxy |
+|------|------|---------|-------|
+| A | `@` | `187.77.148.141` | Proxied (orange cloud) or DNS only |
+| A | `www` | `187.77.148.141` | same as `@` |
+| or CNAME | `www` | `carsaction.sg` | same as `@` |
 
-Wait until both resolve from your PC:
+SSL notes:
+- Origin (VPS) still uses **Certbot** nginx certs (`carsaction.sg`).
+- In Cloudflare → **SSL/TLS**: use **Full (strict)** once the origin cert exists; **Full** is OK during first setup.
+- Awesome Sites “No SSL” is fine — public HTTPS is Cloudflare +/or Certbot.
+
+Wait until both resolve (may show Cloudflare IPs `104.21.*` / `172.67.*` when proxied):
 
 ```powershell
 nslookup carsaction.sg
 nslookup www.carsaction.sg
-# both must return 187.77.148.141
 ```
-
-Do **not** run Certbot until that matches. Awesome Sites “No SSL” is fine — SSL is issued on the VPS.
 
 ---
 

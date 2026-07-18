@@ -17,6 +17,11 @@ ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ARG DATABASE_URL="postgresql://carsaction:carsaction@db:5432/carsaction?schema=public"
 ENV DATABASE_URL=$DATABASE_URL
+# NEXT_PUBLIC_* is inlined at build time — must match production domain.
+ARG NEXT_PUBLIC_APP_URL=https://carsaction.sg
+ARG AUTH_URL=https://carsaction.sg
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV AUTH_URL=$AUTH_URL
 RUN npx prisma generate
 # Prefer classic webpack build in Docker for a stable standalone output.
 RUN npx next build
