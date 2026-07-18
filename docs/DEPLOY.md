@@ -1,7 +1,7 @@
 # Production deploy — carsaction.sg on Hostinger (beside HomeGPT)
 
 Target: Ubuntu VPS (Hostinger KVM2) at `187.77.148.141`  
-Domain: **carsaction.sg** (DNS at Awesome Sites)  
+Domain: **carsaction.sg** (Awesome Sites registrar; DNS on Cloudflare)  
 App path: `/opt/carsaction`  
 Compose project: `-p carsaction` (containers `carsaction-*`, volumes `carsaction_*`)  
 Host bind: **`127.0.0.1:8100` → container `3000`** (HomeGPT keeps `8000`; do not collide)
