@@ -31,9 +31,10 @@ export function ScrollHero({
     offset: ["start start", "end end"],
   });
 
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, -70]);
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.8, 1], [1, 1, 0.2]);
-  const glowOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.55, 0.35, 0.15]);
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, -40]);
+  // Keep copy readable on the last slide (was fading to 0.2 and looking "empty")
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.85, 1], [1, 1, 0.85]);
+  const glowOpacity = useTransform(scrollYProgress, [0, 0.5, 1], [0.55, 0.4, 0.3]);
   const indicatorOpacity = useTransform(scrollYProgress, [0, 0.18], [1, 0]);
 
   if (reduce) {

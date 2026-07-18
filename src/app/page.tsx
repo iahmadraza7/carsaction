@@ -45,7 +45,8 @@ const HERO_IMAGES = [
   hero("1503376780353-7e6692767b70"),
   hero("1519641471654-76ce0107ad1b"),
   hero("1580273916550-e323be2ae537"),
-  hero("1542362567-b07e5437d68a"),
+  // Previous photo-1542362567-b07e5437d68a returns 404 from Unsplash
+  hero("1492144534655-ae79c964c9d7"),
 ];
 
 function dashboardHref(role?: string) {
