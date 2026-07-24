@@ -8,13 +8,19 @@ type Props = {
   page: number;
   totalPages: number;
   /** Current query params (excluding page) to preserve across pages. */
-  baseParams: Record<string, string>;
+  baseParams: Record<string, string | string[]>;
 };
 
-function hrefFor(page: number, baseParams: Record<string, string>) {
-  const sp = new URLSearchParams(baseParams);
+function hrefFor(page: number, baseParams: Record<string, string | string[]>) {
+  const sp = new URLSearchParams();
+  for (const [k, v] of Object.entries(baseParams)) {
+    if (Array.isArray(v)) {
+      for (const item of v) sp.append(k, item);
+    } else if (v) {
+      sp.set(k, v);
+    }
+  }
   if (page > 1) sp.set("page", String(page));
-  else sp.delete("page");
   const qs = sp.toString();
   return qs ? `/cars?${qs}` : "/cars";
 }

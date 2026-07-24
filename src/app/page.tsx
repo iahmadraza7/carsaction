@@ -1,17 +1,15 @@
 ﻿import Link from "next/link";
 import type { Metadata } from "next";
 import {
-  ShieldCheckIcon,
-  ReceiptTextIcon,
-  BadgeCheckIcon,
-  SearchIcon,
   MessageCircleIcon,
+  BadgeCheckIcon,
+  ReceiptTextIcon,
+  SearchIcon,
   HandshakeIcon,
   GavelIcon,
   ArrowRightIcon,
-  CheckIcon,
 } from "lucide-react";
-import { ListingStatus, SubStatus } from "@prisma/client";
+import { ListingStatus } from "@prisma/client";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -24,16 +22,16 @@ import { buttonVariants } from "@/components/ui/button";
 import { BrandMark } from "@/components/brand-mark";
 import { BrandChips } from "@/components/listings/brand-chips";
 import { HomeSearch } from "@/components/listings/home-search";
-import { formatPrice } from "@/lib/format";
+import { SG_MAKES, SG_POPULAR_MAKES } from "@/lib/sg-makes";
 
 export const metadata: Metadata = {
   title: "CARSaction | Singapore's transparent car marketplace",
   description:
-    "Buy and sell cars in Singapore the transparent way. Every listing shows COE expiry, depreciation, OMV and ARF. Flat monthly dealer subscriptions, no per-car fees.",
+    "Buy and sell cars in Singapore the transparent way. Every listing shows COE expiry, depreciation, OMV and ARF so you can compare with confidence.",
   openGraph: {
     title: "CARSaction | Singapore's transparent car marketplace",
     description:
-      "Every listing shows COE, depreciation, OMV and ARF. Flat dealer subscriptions, no per-car fees.",
+      "Every listing shows COE, depreciation, OMV and ARF. Browse verified dealers and WhatsApp them directly.",
   },
 };
 
@@ -61,7 +59,7 @@ export default async function Home() {
   const user = session?.user;
   const dash = dashboardHref(user?.role);
 
-  const [featuredRaw, liveCount, dealerCount, plans, makeRows] = await Promise.all([
+  const [featuredRaw, liveCount, makeRows] = await Promise.all([
     prisma.listing.findMany({
       where: { status: ListingStatus.FOR_SALE },
       orderBy: { createdAt: "desc" },
@@ -69,8 +67,6 @@ export default async function Home() {
       include: { images: { orderBy: { order: "asc" }, take: 1 } },
     }),
     prisma.listing.count({ where: { status: ListingStatus.FOR_SALE } }),
-    prisma.dealerProfile.count({ where: { subscriptionStatus: SubStatus.ACTIVE } }),
-    prisma.subscriptionPlan.findMany({ where: { active: true }, orderBy: { monthlyPrice: "asc" } }),
     prisma.listing.findMany({
       where: { status: ListingStatus.FOR_SALE },
       distinct: ["make"],
@@ -79,7 +75,11 @@ export default async function Home() {
     }),
   ]);
 
-  const makes = makeRows.map((r) => r.make);
+  const searchMakes = SG_MAKES;
+  const chipMakes =
+    makeRows.length > 0
+      ? makeRows.map((r) => r.make)
+      : SG_POPULAR_MAKES.filter((m) => SG_MAKES.includes(m));
 
   const featured: ListingCardData[] = featuredRaw.map((l) => ({
     id: l.id,
@@ -107,10 +107,10 @@ export default async function Home() {
             Buy and sell cars in Singapore, the transparent way.
           </h1>
           <p className="mt-5 max-w-xl text-base text-pretty text-white/80 sm:text-lg">
-            Flat monthly dealer subscriptions instead of per-car fees. Every listing shows COE
-            expiry, depreciation, OMV and ARF: the numbers Singapore buyers actually compare.
+            Every listing shows COE expiry, depreciation, OMV and ARF: the numbers Singapore
+            buyers actually compare. Browse verified dealers and WhatsApp them directly.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link
               href="/cars"
               className={buttonVariants({
@@ -136,16 +136,28 @@ export default async function Home() {
                 </Link>
               ) : null
             ) : (
-              <Link
-                href="/dealer/signup"
-                className={buttonVariants({
-                  size: "lg",
-                  variant: "outline",
-                  className: "border-white/30 bg-white/10 text-white hover:bg-white/20",
-                })}
-              >
-                Register your dealership
-              </Link>
+              <>
+                <Link
+                  href="/signup"
+                  className={buttonVariants({
+                    size: "lg",
+                    variant: "outline",
+                    className: "border-white/30 bg-white/10 text-white hover:bg-white/20",
+                  })}
+                >
+                  Sign up to buy
+                </Link>
+                <Link
+                  href="/dealer/signup"
+                  className={buttonVariants({
+                    size: "lg",
+                    variant: "outline",
+                    className: "border-white/30 bg-white/10 text-white hover:bg-white/20",
+                  })}
+                >
+                  Sell as a dealer
+                </Link>
+              </>
             )}
           </div>
         </div>
@@ -154,32 +166,28 @@ export default async function Home() {
       {/* Search + brands (below hero, no overlap with marquee) */}
       <section className="border-b bg-background px-4 py-10 sm:py-12">
         <div className="mx-auto max-w-6xl">
-          <HomeSearch makes={makes} />
-          {makes.length > 0 ? (
+          <HomeSearch makes={searchMakes} />
+          {chipMakes.length > 0 ? (
             <div className="mx-auto mt-6 max-w-4xl">
               <p className="mb-2 text-center text-xs font-medium tracking-wide text-muted-foreground uppercase">
                 Explore brands
               </p>
-              <BrandChips makes={makes} className="justify-center" />
+              <BrandChips makes={chipMakes} className="justify-center" />
             </div>
           ) : null}
         </div>
       </section>
 
-      {/* Stats band */}
-      <section className="border-y bg-card">
-        <div className="mx-auto grid max-w-6xl grid-cols-3 gap-4 px-4 py-10 text-center">
-          <Reveal delay={0}>
-            <Stat value={<AnimatedCounter value={liveCount} />} label="Cars listed" />
-          </Reveal>
-          <Reveal delay={0.08}>
-            <Stat value={<AnimatedCounter value={dealerCount} />} label="Active dealers" />
-          </Reveal>
-          <Reveal delay={0.16}>
-            <Stat value={<>4</>} label="SG figures on every car" sub="COE · Depr · OMV · ARF" />
-          </Reveal>
-        </div>
-      </section>
+      {/* Stats — only real non-zero inventory counts */}
+      {liveCount > 0 ? (
+        <section className="border-y bg-card">
+          <div className="mx-auto flex max-w-6xl justify-center gap-10 px-4 py-10 text-center sm:gap-16">
+            <Reveal delay={0}>
+              <Stat value={<AnimatedCounter value={liveCount} />} label="Cars listed" />
+            </Reveal>
+          </div>
+        </section>
+      ) : null}
 
       {/* Why CARSaction */}
       <section className="mx-auto w-full max-w-6xl px-4 py-20">
@@ -188,7 +196,7 @@ export default async function Home() {
             Built for how Singapore actually buys cars
           </h2>
           <p className="mt-3 text-muted-foreground">
-            No hidden per-listing fees, no missing numbers, no guesswork.
+            Clear numbers on every listing, verified dealers, and direct WhatsApp contact.
           </p>
         </Reveal>
 
@@ -202,9 +210,9 @@ export default async function Home() {
           </Reveal>
           <Reveal delay={0.1}>
             <Feature
-              icon={<ShieldCheckIcon />}
-              title="Flat dealer subscriptions"
-              body="Dealers pay one predictable monthly fee, not per car. More inventory, no penalty for listing it."
+              icon={<MessageCircleIcon />}
+              title="WhatsApp the dealer"
+              body="Message the dealer straight from any listing with a pre-filled enquiry. No account needed to start the conversation."
             />
           </Reveal>
           <Reveal delay={0.2}>
@@ -287,73 +295,6 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Pricing teaser */}
-      {plans.length > 0 ? (
-        <section className="bg-secondary/40">
-          <div className="mx-auto w-full max-w-6xl px-4 py-20">
-            <Reveal className="mx-auto max-w-2xl text-center">
-              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-                Simple pricing for dealers
-              </h2>
-              <p className="mt-3 text-muted-foreground">
-                One flat monthly fee. List your whole lot, not one car at a time.
-              </p>
-            </Reveal>
-            <div className="mx-auto mt-12 grid max-w-3xl gap-5 sm:grid-cols-2">
-              {plans.map((plan, i) => (
-                <Reveal key={plan.id} delay={i * 0.1}>
-                  <div
-                    className={`flex h-full flex-col gap-4 rounded-2xl border bg-card p-6 ${
-                      plan.tier === "PLATINUM" ? "ring-2 ring-primary" : ""
-                    }`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-lg font-semibold">{plan.name}</h3>
-                      {plan.tier === "PLATINUM" ? (
-                        <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                          Most popular
-                        </span>
-                      ) : null}
-                    </div>
-                    <div className="flex items-baseline gap-1">
-                      <span className="text-3xl font-bold">
-                        {formatPrice(Number(plan.monthlyPrice))}
-                      </span>
-                      <span className="text-sm text-muted-foreground">/month</span>
-                    </div>
-                    <ul className="flex flex-col gap-2 text-sm text-muted-foreground">
-                      <li className="flex items-center gap-2">
-                        <CheckIcon className="size-4 text-primary" />
-                        {plan.listingLimit == null
-                          ? "Unlimited active listings"
-                          : `Up to ${plan.listingLimit} active listings`}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckIcon className="size-4 text-primary" />
-                        WhatsApp enquiries & inbox
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckIcon className="size-4 text-primary" />
-                        Verified dealer badge
-                      </li>
-                    </ul>
-                    <Link
-                      href="/pricing"
-                      className={buttonVariants({
-                        variant: plan.tier === "PLATINUM" ? "default" : "outline",
-                        className: "mt-auto",
-                      })}
-                    >
-                      See plan details
-                    </Link>
-                  </div>
-                </Reveal>
-              ))}
-            </div>
-          </div>
-        </section>
-      ) : null}
-
       {/* Repo bidding teaser (Milestone 2) */}
       <section className="mx-auto w-full max-w-6xl px-4 py-20">
         <Reveal>
@@ -380,17 +321,26 @@ export default async function Home() {
         <div className="mx-auto w-full max-w-6xl px-4 py-20 text-center">
           <Reveal>
             <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-balance sm:text-4xl">
-              Ready to find your next car, or sell your lot?
+              Ready to find your next car?
             </h2>
+            <p className="mx-auto mt-3 max-w-lg text-muted-foreground">
+              Buyers browse for free. Dealers list inventory from a separate dealer account.
+            </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Link href="/cars" className={buttonVariants({ size: "lg" })}>
                 Browse cars
               </Link>
               <Link
+                href="/signup"
+                className={buttonVariants({ size: "lg", variant: "outline" })}
+              >
+                Sign up to buy
+              </Link>
+              <Link
                 href="/dealer/signup"
                 className={buttonVariants({ size: "lg", variant: "outline" })}
               >
-                Register your dealership
+                Sell as a dealer
               </Link>
             </div>
           </Reveal>
@@ -405,10 +355,13 @@ export default async function Home() {
               Browse cars
             </Link>
             <Link href="/pricing" className="hover:text-foreground hover:underline">
-              Pricing
+              Dealer plans
+            </Link>
+            <Link href="/signup" className="hover:text-foreground hover:underline">
+              Sign up to buy
             </Link>
             <Link href="/dealer/signup" className="hover:text-foreground hover:underline">
-              List with us
+              Sell as a dealer
             </Link>
             <Link href="/login" className="hover:text-foreground hover:underline">
               Sign in

@@ -22,12 +22,12 @@ export function BrandMark({
       <Image
         src="/logo.png"
         alt="CARSaction"
-        width={compact ? 200 : 280}
-        height={compact ? 64 : 90}
+        width={compact ? 220 : 340}
+        height={compact ? 72 : 110}
         priority
         className={cn(
-          "h-14 w-auto object-contain object-left sm:h-16",
-          compact && "h-11 sm:h-12",
+          "h-16 w-auto object-contain object-left sm:h-20",
+          compact && "h-12 sm:h-14",
         )}
       />
     </span>

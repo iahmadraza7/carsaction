@@ -19,6 +19,7 @@ import {
   isTransmission,
   isSort,
 } from "@/lib/listing-options";
+import { SG_MAKES, SG_MODELS_BY_MAKE, SG_POPULAR_MAKES } from "@/lib/sg-makes";
 import type { Prisma } from "@prisma/client";
 
 export const metadata: Metadata = {
@@ -32,6 +33,15 @@ type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 function one(v: string | string[] | undefined): string {
   if (Array.isArray(v)) return v[0] ?? "";
   return v ?? "";
+}
+
+function many(v: string | string[] | undefined): string[] {
+  if (v == null) return [];
+  const raw = Array.isArray(v) ? v : [v];
+  return raw
+    .flatMap((s) => s.split(","))
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 function toInt(v: string): number | undefined {
@@ -57,8 +67,8 @@ const FILTER_KEYS = [
 export default async function CarsPage({ searchParams }: { searchParams: SearchParams }) {
   const sp = await searchParams;
 
-  const make = one(sp.make);
-  const model = one(sp.model);
+  const makesSel = many(sp.make);
+  const modelsSel = many(sp.model);
   const priceMin = toInt(one(sp.priceMin));
   const priceMax = toInt(one(sp.priceMax));
   const yearMin = toInt(one(sp.yearMin));
@@ -66,15 +76,17 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
   const mileageMax = toInt(one(sp.mileageMax));
   const deprMax = toInt(one(sp.deprMax));
   const coeYearsMin = toInt(one(sp.coeYearsMin));
-  const bodyType = one(sp.bodyType);
-  const fuelType = one(sp.fuelType);
-  const transmission = one(sp.transmission);
+  const bodyTypes = many(sp.bodyType).filter(isBodyType);
+  const fuelTypes = many(sp.fuelType).filter(isFuelType);
+  const transmissions = many(sp.transmission).filter(isTransmission);
   const sort = one(sp.sort);
   const page = Math.max(1, toInt(one(sp.page)) ?? 1);
 
   const where: Prisma.ListingWhereInput = { status: "FOR_SALE" };
-  if (make) where.make = make;
-  if (model) where.model = model;
+  if (makesSel.length === 1) where.make = makesSel[0];
+  else if (makesSel.length > 1) where.make = { in: makesSel };
+  if (modelsSel.length === 1) where.model = modelsSel[0];
+  else if (modelsSel.length > 1) where.model = { in: modelsSel };
   if (priceMin != null || priceMax != null) {
     where.price = {};
     if (priceMin != null) where.price.gte = priceMin;
@@ -92,9 +104,12 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
     coeCutoff.setFullYear(coeCutoff.getFullYear() + coeYearsMin);
     where.coeExpiry = { gte: coeCutoff };
   }
-  if (isBodyType(bodyType)) where.bodyType = bodyType;
-  if (isFuelType(fuelType)) where.fuelType = fuelType;
-  if (isTransmission(transmission)) where.transmission = transmission;
+  if (bodyTypes.length === 1) where.bodyType = bodyTypes[0];
+  else if (bodyTypes.length > 1) where.bodyType = { in: bodyTypes };
+  if (fuelTypes.length === 1) where.fuelType = fuelTypes[0];
+  else if (fuelTypes.length > 1) where.fuelType = { in: fuelTypes };
+  if (transmissions.length === 1) where.transmission = transmissions[0];
+  else if (transmissions.length > 1) where.transmission = { in: transmissions };
 
   const orderBy: Prisma.ListingOrderByWithRelationInput = isSort(sort)
     ? sort === "price_asc"
@@ -106,18 +121,12 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
           : { createdAt: "desc" }
     : { createdAt: "desc" };
 
-  const [makeRows, modelRows, total, rows] = await Promise.all([
+  const [liveMakeRows, total, rows] = await Promise.all([
     prisma.listing.findMany({
       where: { status: "FOR_SALE" },
       distinct: ["make"],
       select: { make: true },
       orderBy: { make: "asc" },
-    }),
-    prisma.listing.findMany({
-      where: { status: "FOR_SALE" },
-      distinct: ["make", "model"],
-      select: { make: true, model: true },
-      orderBy: [{ make: "asc" }, { model: "asc" }],
     }),
     prisma.listing.count({ where }),
     prisma.listing.findMany({
@@ -129,11 +138,12 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
     }),
   ]);
 
-  const makes = makeRows.map((r) => r.make);
-  const modelsByMake: Record<string, string[]> = {};
-  for (const r of modelRows) {
-    (modelsByMake[r.make] ??= []).push(r.model);
-  }
+  const makes = SG_MAKES;
+  const modelsByMake: Record<string, string[]> = { ...SG_MODELS_BY_MAKE };
+  const chipMakes =
+    liveMakeRows.length > 0
+      ? liveMakeRows.map((r) => r.make)
+      : SG_POPULAR_MAKES.filter((m) => SG_MAKES.includes(m));
 
   const listings: ListingCardData[] = rows.map((l) => ({
     id: l.id,
@@ -148,13 +158,14 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
   }));
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
-  const activeCount = FILTER_KEYS.filter((k) => one(sp[k])).length;
+  const activeCount = FILTER_KEYS.filter((k) => many(sp[k]).length > 0).length;
 
-  // Params to preserve across pagination links.
-  const baseParams: Record<string, string> = {};
+  // Params to preserve across pagination links (repeat multi-value keys).
+  const baseParams: Record<string, string | string[]> = {};
   for (const k of FILTER_KEYS) {
-    const v = one(sp[k]);
-    if (v) baseParams[k] = v;
+    const values = many(sp[k]);
+    if (values.length === 1) baseParams[k] = values[0];
+    else if (values.length > 1) baseParams[k] = values;
   }
   if (sort) baseParams.sort = sort;
 
@@ -174,7 +185,7 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
             <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
               Browse by brand
             </p>
-            <BrandChips makes={makes} activeMake={make || undefined} />
+            <BrandChips makes={chipMakes} activeMake={makesSel[0]} />
           </div>
         </div>
 

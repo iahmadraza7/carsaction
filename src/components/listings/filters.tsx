@@ -31,12 +31,66 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
   );
 }
 
+function MultiCheck({
+  options,
+  selected,
+  onChange,
+  emptyLabel,
+}: {
+  options: { value: string; label: string }[];
+  selected: string[];
+  onChange: (next: string[]) => void;
+  emptyLabel?: string;
+}) {
+  function toggle(value: string) {
+    onChange(
+      selected.includes(value)
+        ? selected.filter((v) => v !== value)
+        : [...selected, value],
+    );
+  }
+
+  if (options.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground">{emptyLabel ?? "No options"}</p>
+    );
+  }
+
+  return (
+    <div className="max-h-36 space-y-1.5 overflow-y-auto rounded-lg border border-input p-2">
+      {options.map((o) => (
+        <label
+          key={o.value}
+          className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm hover:bg-muted/60"
+        >
+          <input
+            type="checkbox"
+            className="size-3.5 accent-primary"
+            checked={selected.includes(o.value)}
+            onChange={() => toggle(o.value)}
+          />
+          <span>{o.label}</span>
+        </label>
+      ))}
+    </div>
+  );
+}
+
+function readList(params: URLSearchParams, key: string): string[] {
+  const all = params.getAll(key);
+  if (all.length === 0) return [];
+  return all
+    .flatMap((v) => v.split(","))
+    .map((v) => v.trim())
+    .filter(Boolean);
+}
+
 export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
   const router = useRouter();
   const params = useSearchParams();
 
-  const [make, setMake] = React.useState(params.get("make") ?? "");
-  const [model, setModel] = React.useState(params.get("model") ?? "");
+  const [makesSel, setMakesSel] = React.useState(() => readList(params, "make"));
+  const [modelsSel, setModelsSel] = React.useState(() => readList(params, "model"));
   const [priceMin, setPriceMin] = React.useState(params.get("priceMin") ?? "");
   const [priceMax, setPriceMax] = React.useState(params.get("priceMax") ?? "");
   const [yearMin, setYearMin] = React.useState(params.get("yearMin") ?? "");
@@ -44,28 +98,42 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
   const [mileageMax, setMileageMax] = React.useState(params.get("mileageMax") ?? "");
   const [deprMax, setDeprMax] = React.useState(params.get("deprMax") ?? "");
   const [coeYearsMin, setCoeYearsMin] = React.useState(params.get("coeYearsMin") ?? "");
-  const [bodyType, setBodyType] = React.useState(params.get("bodyType") ?? "");
-  const [fuelType, setFuelType] = React.useState(params.get("fuelType") ?? "");
-  const [transmission, setTransmission] = React.useState(params.get("transmission") ?? "");
+  const [bodyTypes, setBodyTypes] = React.useState(() => readList(params, "bodyType"));
+  const [fuelTypes, setFuelTypes] = React.useState(() => readList(params, "fuelType"));
+  const [transmissions, setTransmissions] = React.useState(() =>
+    readList(params, "transmission"),
+  );
 
-  const availableModels = make
-    ? (modelsByMake[make] ?? [])
-    : Array.from(new Set(Object.values(modelsByMake).flat())).sort();
+  const availableModels = React.useMemo(() => {
+    const source =
+      makesSel.length > 0
+        ? makesSel.flatMap((m) => modelsByMake[m] ?? [])
+        : Object.values(modelsByMake).flat();
+    return Array.from(new Set(source)).sort((a, b) => a.localeCompare(b));
+  }, [makesSel, modelsByMake]);
 
-  function handleMakeChange(value: string) {
-    setMake(value);
-    // Reset the model if it no longer belongs to the selected make.
-    if (value && !(modelsByMake[value] ?? []).includes(model)) setModel("");
+  function handleMakesChange(next: string[]) {
+    setMakesSel(next);
+    setModelsSel((prev) =>
+      prev.filter((model) =>
+        next.length === 0
+          ? true
+          : next.some((m) => (modelsByMake[m] ?? []).includes(model)),
+      ),
+    );
   }
 
   function apply(e: React.FormEvent) {
     e.preventDefault();
     const next = new URLSearchParams();
+    const setList = (k: string, values: string[]) => {
+      for (const v of values) next.append(k, v);
+    };
     const set = (k: string, v: string) => {
       if (v.trim()) next.set(k, v.trim());
     };
-    set("make", make);
-    set("model", model);
+    setList("make", makesSel);
+    setList("model", modelsSel);
     set("priceMin", priceMin);
     set("priceMax", priceMax);
     set("yearMin", yearMin);
@@ -73,10 +141,9 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
     set("mileageMax", mileageMax);
     set("deprMax", deprMax);
     set("coeYearsMin", coeYearsMin);
-    set("bodyType", bodyType);
-    set("fuelType", fuelType);
-    set("transmission", transmission);
-    // Preserve sort, reset to page 1 on any filter change.
+    setList("bodyType", bodyTypes);
+    setList("fuelType", fuelTypes);
+    setList("transmission", transmissions);
     const sort = params.get("sort");
     if (sort) next.set("sort", sort);
     const qs = next.toString();
@@ -85,8 +152,8 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
   }
 
   function clear() {
-    setMake("");
-    setModel("");
+    setMakesSel([]);
+    setModelsSel([]);
     setPriceMin("");
     setPriceMax("");
     setYearMin("");
@@ -94,9 +161,9 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
     setMileageMax("");
     setDeprMax("");
     setCoeYearsMin("");
-    setBodyType("");
-    setFuelType("");
-    setTransmission("");
+    setBodyTypes([]);
+    setFuelTypes([]);
+    setTransmissions([]);
     const sort = params.get("sort");
     router.push(sort ? `/cars?sort=${sort}` : "/cars");
     onApplied?.();
@@ -105,33 +172,20 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
   return (
     <form onSubmit={apply} className="grid gap-4">
       <Field label="Make">
-        <select
-          className={controlClass}
-          value={make}
-          onChange={(e) => handleMakeChange(e.target.value)}
-        >
-          <option value="">Any make</option>
-          {makes.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
+        <MultiCheck
+          options={makes.map((m) => ({ value: m, label: m }))}
+          selected={makesSel}
+          onChange={handleMakesChange}
+        />
       </Field>
 
       <Field label="Model">
-        <select
-          className={controlClass}
-          value={model}
-          onChange={(e) => setModel(e.target.value)}
-        >
-          <option value="">Any model</option>
-          {availableModels.map((m) => (
-            <option key={m} value={m}>
-              {m}
-            </option>
-          ))}
-        </select>
+        <MultiCheck
+          options={availableModels.map((m) => ({ value: m, label: m }))}
+          selected={modelsSel}
+          onChange={setModelsSel}
+          emptyLabel="Select a make first (or any model)"
+        />
       </Field>
 
       <Field label="Price (S$)">
@@ -220,49 +274,33 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
       </Field>
 
       <Field label="Body type">
-        <select
-          className={controlClass}
-          value={bodyType}
-          onChange={(e) => setBodyType(e.target.value)}
-        >
-          <option value="">Any body type</option>
-          {BODY_TYPES.map((b) => (
-            <option key={b} value={b}>
-              {humanizeEnum(b)}
-            </option>
-          ))}
-        </select>
+        <MultiCheck
+          options={BODY_TYPES.map((b) => ({ value: b, label: humanizeEnum(b) }))}
+          selected={bodyTypes}
+          onChange={setBodyTypes}
+        />
       </Field>
 
       <Field label="Fuel type">
-        <select
-          className={controlClass}
-          value={fuelType}
-          onChange={(e) => setFuelType(e.target.value)}
-        >
-          <option value="">Any fuel type</option>
-          {FUEL_TYPES.map((f) => (
-            <option key={f} value={f}>
-              {humanizeEnum(f)}
-            </option>
-          ))}
-        </select>
+        <MultiCheck
+          options={FUEL_TYPES.map((f) => ({ value: f, label: humanizeEnum(f) }))}
+          selected={fuelTypes}
+          onChange={setFuelTypes}
+        />
       </Field>
 
       <Field label="Transmission">
-        <select
-          className={controlClass}
-          value={transmission}
-          onChange={(e) => setTransmission(e.target.value)}
-        >
-          <option value="">Any transmission</option>
-          {TRANSMISSIONS.map((t) => (
-            <option key={t} value={t}>
-              {humanizeEnum(t)}
-            </option>
-          ))}
-        </select>
+        <MultiCheck
+          options={TRANSMISSIONS.map((t) => ({ value: t, label: humanizeEnum(t) }))}
+          selected={transmissions}
+          onChange={setTransmissions}
+        />
       </Field>
+
+      <div className="rounded-lg border border-dashed border-border bg-muted/30 px-3 py-2.5">
+        <p className="text-xs font-medium text-muted-foreground">Rental cars</p>
+        <p className="mt-0.5 text-sm text-muted-foreground">Coming soon</p>
+      </div>
 
       <div className="flex gap-2 pt-1">
         <Button type="submit" className="flex-1">

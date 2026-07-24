@@ -40,8 +40,12 @@ export const dealerSignupSchema = z
     confirmPassword: z.string(),
     businessName: z.string().trim().min(2, "Enter your business name").max(150),
     whatsappNumber: phone,
-    uen: z.string().trim().max(20).optional(),
-    address: z.string().trim().max(255).optional(),
+    uen: z
+      .string()
+      .trim()
+      .min(5, "Enter your UEN")
+      .max(20, "UEN looks too long"),
+    address: z.string().trim().max(255).optional().or(z.literal("")),
   })
   .refine((d) => d.password === d.confirmPassword, {
     message: "Passwords do not match",

@@ -127,14 +127,16 @@ export function DealerSignupForm() {
       />
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <TextField
-          label="UEN (optional)"
+          label="UEN"
           placeholder="201812345A"
+          hint="Required — we use this to verify your dealership."
           error={errors.uen?.message}
           {...register("uen")}
         />
         <TextField
-          label="Address (optional)"
+          label="Showroom address"
           placeholder="10 Ubi Ave 3, Singapore"
+          hint="Optional"
           error={errors.address?.message}
           {...register("address")}
         />

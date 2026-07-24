@@ -12,6 +12,7 @@
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
     "db:seed": "prisma db seed",
+    "db:seed:listings": "tsx prisma/seed-listings.ts",
     "db:reset": "prisma migrate reset",
     "db:studio": "prisma studio",
     "setup:stripe": "tsx scripts/setup-stripe.ts"

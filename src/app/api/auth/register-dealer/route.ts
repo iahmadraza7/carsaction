@@ -47,7 +47,7 @@ export async function POST(req: Request) {
         create: {
           businessName,
           whatsappNumber,
-          uen: uen || undefined,
+          uen,
           address: address || undefined,
         },
       },

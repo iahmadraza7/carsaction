@@ -10,7 +10,7 @@ import {
   type MotionValue,
 } from "framer-motion";
 
-const FLOAT_CHIPS = ["COE expiry", "Depreciation", "OMV", "ARF", "Verified dealers", "Flat plans"];
+const FLOAT_CHIPS = ["COE expiry", "Depreciation", "OMV", "ARF", "Verified dealers", "WhatsApp dealers"];
 
 /**
  * Scroll-driven hero: background images crossfade as you scroll, plus orbs,
@@ -164,10 +164,10 @@ export function ScrollHero({
                 {[
                   "Transparent pricing",
                   "Singapore COE",
-                  "Dealer subscriptions",
+                  "Verified dealers",
                   "WhatsApp dealers",
-                  "Verified lots",
-                  "No per-car fees",
+                  "OMV and ARF",
+                  "Depreciation clear",
                 ].map((t) => (
                   <span key={`${loop}-${t}`}>{t}</span>
                 ))}
