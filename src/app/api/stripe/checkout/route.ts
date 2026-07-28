@@ -67,6 +67,8 @@ export async function POST(req: Request) {
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
     allow_promotion_codes: true,
+    // Singapore dealers only — charge SGD, never localize to PKR/USD/etc.
+    adaptive_pricing: { enabled: false },
     // Attach identifiers so the webhook can resolve the dealer without guessing.
     metadata: { dealerProfileId: profile.id, tier },
     subscription_data: { metadata: { dealerProfileId: profile.id, tier } },
