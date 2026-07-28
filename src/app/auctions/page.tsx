@@ -6,6 +6,8 @@ import { closeExpiredAuctions } from "@/lib/auction-close";
 import { SiteHeader } from "@/components/site-header";
 import { AuctionCard } from "@/components/auctions/auction-card";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Repo auctions | CARSaction",
   description:

@@ -54,6 +54,7 @@ let tickInFlight = false;
 export function startAuctionCloser(): void {
   if (started) return;
   started = true;
+  console.log("[auction-closer] Scheduler started (every 60s)");
 
   const tick = async () => {
     if (tickInFlight) return;
