@@ -2,10 +2,12 @@ import Link from "next/link";
 
 import { LogoutButton } from "@/components/auth/logout-button";
 import { BrandMark } from "@/components/brand-mark";
+import { HeaderNotifications } from "@/components/notifications/header-notifications";
 
 const NAV = [
   { href: "/dealer/dashboard", label: "Dashboard" },
   { href: "/dealer/listings", label: "Listings" },
+  { href: "/dealer/bids", label: "Repo bids" },
   { href: "/dealer/enquiries", label: "Enquiries" },
 ];
 
@@ -43,6 +45,7 @@ export function DealerShell({
             </nav>
           </div>
           <div className="flex items-center gap-3">
+            <HeaderNotifications />
             <span className="hidden text-sm text-muted-foreground sm:inline">{email}</span>
             <LogoutButton />
           </div>

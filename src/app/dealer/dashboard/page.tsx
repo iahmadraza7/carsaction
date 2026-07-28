@@ -176,6 +176,12 @@ export default async function DealerDashboardPage({
                 </Link>
               ) : null}
               <Link
+                href="/dealer/bids"
+                className={buttonVariants({ variant: "outline", size: "sm" })}
+              >
+                Your repo bids
+              </Link>
+              <Link
                 href="/dealer/enquiries"
                 className={buttonVariants({ variant: "ghost", size: "sm" })}
               >

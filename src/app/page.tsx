@@ -295,22 +295,44 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Repo bidding teaser (Milestone 2) */}
+      {/* Repo bidding */}
       <section className="mx-auto w-full max-w-6xl px-4 py-20">
         <Reveal>
           <div className="relative overflow-hidden rounded-3xl border bg-foreground px-6 py-14 text-center text-background sm:px-12">
             <div className="mx-auto max-w-2xl">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-background/15 px-3 py-1 text-xs font-medium">
                 <GavelIcon className="size-3.5" />
-                Coming soon
+                Now open
               </span>
               <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
                 Repossessed vehicle bidding
               </h2>
               <p className="mt-3 text-background/70">
-                Finance companies will list repossessed vehicles and dealers will bid in a
-                transparent, deadline-based process. Launching in our next milestone.
+                Finance companies list repossessed vehicles. Subscribed dealers place sealed
+                bids before a fixed deadline.
               </p>
+              <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  href="/auctions"
+                  className={buttonVariants({
+                    size: "lg",
+                    className: "bg-background text-foreground hover:bg-background/90",
+                  })}
+                >
+                  Browse repo auctions
+                </Link>
+                <Link
+                  href="/finance/signup"
+                  className={buttonVariants({
+                    size: "lg",
+                    variant: "outline",
+                    className:
+                      "border-background/40 bg-transparent text-background hover:bg-background/10 hover:text-background",
+                  })}
+                >
+                  Finance company signup
+                </Link>
+              </div>
             </div>
           </div>
         </Reveal>

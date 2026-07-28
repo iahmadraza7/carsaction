@@ -53,6 +53,26 @@ export const dealerSignupSchema = z
   });
 export type DealerSignupInput = z.infer<typeof dealerSignupSchema>;
 
+export const financeSignupSchema = z
+  .object({
+    name: z.string().trim().min(2, "Enter your name").max(100),
+    email,
+    password,
+    confirmPassword: z.string(),
+    companyName: z.string().trim().min(2, "Enter your company name").max(150),
+    uen: z
+      .string()
+      .trim()
+      .min(5, "Enter your UEN")
+      .max(20, "UEN looks too long"),
+    contactPerson: z.string().trim().max(100).optional().or(z.literal("")),
+  })
+  .refine((d) => d.password === d.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+export type FinanceSignupInput = z.infer<typeof financeSignupSchema>;
+
 export const forgotPasswordSchema = z.object({ email });
 export type ForgotPasswordInput = z.infer<typeof forgotPasswordSchema>;
 

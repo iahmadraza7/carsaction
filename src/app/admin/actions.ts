@@ -77,6 +77,26 @@ export async function setDealerVerified(
   return { ok: true };
 }
 
+const financeVerifySchema = z.object({
+  financeId: z.string().min(1),
+  verified: z.boolean(),
+});
+
+export async function setFinanceVerified(
+  input: z.infer<typeof financeVerifySchema>,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const parsed = financeVerifySchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid input" };
+
+  await prisma.financeProfile.update({
+    where: { id: parsed.data.financeId },
+    data: { verified: parsed.data.verified },
+  });
+  revalidatePath("/admin/finance");
+  return { ok: true };
+}
+
 export async function deleteListingAsAdmin(listingId: string): Promise<ActionResult> {
   await requireAdmin();
   if (!listingId) return { ok: false, error: "Invalid input" };

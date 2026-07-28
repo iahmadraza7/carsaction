@@ -38,3 +38,53 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string): Prom
     `,
   });
 }
+
+export async function sendAuctionWonEmail(input: {
+  to: string;
+  dealerName: string;
+  vehicleTitle: string;
+  companyName: string;
+  contactPerson: string | null;
+  contactEmail: string;
+  contactPhone: string | null;
+  auctionUrl: string;
+}): Promise<void> {
+  const contactLines = [
+    input.companyName,
+    input.contactPerson ? `Contact: ${input.contactPerson}` : null,
+    `Email: ${input.contactEmail}`,
+    input.contactPhone ? `Phone: ${input.contactPhone}` : null,
+  ]
+    .filter(Boolean)
+    .join("<br/>");
+
+  if (!resend) {
+    console.log(
+      `[dev] Auction won email for ${input.to}: You won ${input.vehicleTitle}. Contact ${input.companyName} <${input.contactEmail}>. ${input.auctionUrl}`,
+    );
+    return;
+  }
+
+  await resend.emails.send({
+    from: FROM,
+    to: input.to,
+    subject: `You won the bid for ${input.vehicleTitle}`,
+    html: `
+      <div style="font-family: ui-sans-serif, system-ui, sans-serif; max-width: 480px; margin: 0 auto;">
+        <h2 style="color: #1f1b16;">Congratulations, ${input.dealerName}</h2>
+        <p style="color: #4a4139;">
+          You won the bid for <strong>${input.vehicleTitle}</strong> on CARSaction.
+          Please contact the finance company to complete the deal:
+        </p>
+        <p style="color: #1f1b16; line-height: 1.6;">${contactLines}</p>
+        <p style="margin: 24px 0;">
+          <a href="${input.auctionUrl}"
+             style="background: #c25b1c; color: #fff; padding: 12px 20px; border-radius: 8px;
+                    text-decoration: none; font-weight: 600;">
+            View auction
+          </a>
+        </p>
+      </div>
+    `,
+  });
+}

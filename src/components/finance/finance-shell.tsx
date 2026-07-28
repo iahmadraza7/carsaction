@@ -5,18 +5,11 @@ import { BrandMark } from "@/components/brand-mark";
 import { HeaderNotifications } from "@/components/notifications/header-notifications";
 
 const NAV = [
-  { href: "/admin/dashboard", label: "Overview" },
-  { href: "/admin/users", label: "Users" },
-  { href: "/admin/dealers", label: "Dealers" },
-  { href: "/admin/finance", label: "Finance companies" },
-  { href: "/admin/auctions", label: "Auctions" },
-  { href: "/admin/listings", label: "Listings" },
-  { href: "/admin/plans", label: "Plans" },
-  { href: "/admin/enquiries", label: "Enquiries" },
-  { href: "/admin/transactions", label: "Transactions" },
+  { href: "/finance/dashboard", label: "Dashboard" },
+  { href: "/finance/vehicles/new", label: "Post vehicle" },
 ];
 
-export function AdminShell({
+export function FinanceShell({
   email,
   title,
   description,
@@ -33,13 +26,21 @@ export function AdminShell({
     <div className="min-h-svh bg-background">
       <header className="border-b bg-card">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-6">
             <Link href="/" className="flex items-center">
               <BrandMark />
             </Link>
-            <span className="rounded-full bg-accent px-2 py-0.5 text-xs font-medium text-accent-foreground">
-              Admin
-            </span>
+            <nav className="hidden items-center gap-4 sm:flex">
+              {NAV.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
           </div>
           <div className="flex items-center gap-3">
             <HeaderNotifications />
@@ -47,12 +48,12 @@ export function AdminShell({
             <LogoutButton />
           </div>
         </div>
-        <nav className="mx-auto flex max-w-6xl gap-4 overflow-x-auto border-t px-4 py-2 text-sm">
+        <nav className="flex items-center gap-4 border-t px-4 py-2 sm:hidden">
           {NAV.map((item) => (
             <Link
               key={item.href}
               href={item.href}
-              className="whitespace-nowrap font-medium text-muted-foreground transition-colors hover:text-foreground"
+              className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
             >
               {item.label}
             </Link>

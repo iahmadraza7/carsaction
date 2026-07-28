@@ -21,6 +21,19 @@ export function formatPrice(value: number | null | undefined): string {
   return SGD.format(value);
 }
 
+/** SGD with cents for bid amounts, e.g. "S$12,500.00". */
+export function formatBidAmount(value: number | string | null | undefined): string {
+  if (value == null || value === "") return EMPTY;
+  const n = typeof value === "string" ? Number(value) : value;
+  if (!Number.isFinite(n)) return EMPTY;
+  return new Intl.NumberFormat("en-SG", {
+    style: "currency",
+    currency: "SGD",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n);
+}
+
 /** SGD per year, e.g. "S$11,200/yr". */
 export function formatDepreciation(value: number | null | undefined): string {
   if (value == null) return EMPTY;

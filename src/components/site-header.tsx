@@ -2,9 +2,11 @@ import Link from "next/link";
 import { HeartIcon } from "lucide-react";
 
 import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
 import { buttonVariants } from "@/components/ui/button";
 import { LogoutButton } from "@/components/auth/logout-button";
 import { BrandMark } from "@/components/brand-mark";
+import { NotificationBell } from "@/components/notifications/notification-bell";
 
 function dashboardHref(role?: string) {
   if (role === "ADMIN") return "/admin/dashboard";
@@ -17,6 +19,23 @@ export async function SiteHeader() {
   const session = await auth();
   const user = session?.user;
   const dash = dashboardHref(user?.role);
+
+  const notifications = user
+    ? await prisma.notification.findMany({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        take: 12,
+        select: {
+          id: true,
+          title: true,
+          body: true,
+          href: true,
+          readAt: true,
+          createdAt: true,
+        },
+      })
+    : [];
+  const unreadCount = notifications.filter((n) => !n.readAt).length;
 
   return (
     <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur supports-backdrop-filter:bg-card/80">
@@ -32,6 +51,12 @@ export async function SiteHeader() {
             Browse cars
           </Link>
           <Link
+            href="/auctions"
+            className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline"
+          >
+            Repo Auctions
+          </Link>
+          <Link
             href="/pricing"
             className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground md:inline"
           >
@@ -42,6 +67,21 @@ export async function SiteHeader() {
         <nav className="flex shrink-0 items-center gap-1.5 sm:gap-2">
           {user ? (
             <>
+              {user.role === "DEALER" ||
+              user.role === "FINANCE_CO" ||
+              user.role === "ADMIN" ? (
+                <NotificationBell
+                  unreadCount={unreadCount}
+                  notifications={notifications.map((n) => ({
+                    id: n.id,
+                    title: n.title,
+                    body: n.body,
+                    href: n.href,
+                    readAt: n.readAt?.toISOString() ?? null,
+                    createdAt: n.createdAt.toISOString(),
+                  }))}
+                />
+              ) : null}
               {user.role === "BUYER" ? (
                 <Link
                   href="/favourites"

@@ -9,7 +9,7 @@ type Guard = { prefix: string; role: string; allow: string[] };
 const GUARDS: Guard[] = [
   { prefix: "/dealer", role: "DEALER", allow: ["/dealer/signup"] },
   { prefix: "/admin", role: "ADMIN", allow: [] },
-  { prefix: "/finance", role: "FINANCE_CO", allow: [] },
+  { prefix: "/finance", role: "FINANCE_CO", allow: ["/finance/signup"] },
 ];
 
 export default auth((req) => {

@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { processImageUploads } from "@/lib/image-upload";
 
-// Dealer photo upload. DEALER or ADMIN only.
+// Finance company photo upload for repo vehicles. FINANCE_CO only.
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
@@ -11,7 +11,7 @@ export async function POST(req: Request) {
   if (!session?.user) {
     return NextResponse.json({ error: "Not signed in" }, { status: 401 });
   }
-  if (session.user.role !== "DEALER" && session.user.role !== "ADMIN") {
+  if (session.user.role !== "FINANCE_CO") {
     return NextResponse.json({ error: "Not authorised to upload photos" }, { status: 403 });
   }
 

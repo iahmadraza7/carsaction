@@ -102,6 +102,7 @@ model User {
   favourites     Favourite[]
   enquiries      Enquiry[]
   bids           Bid[] // milestone 2
+  notifications  Notification[]
 
   // Auth.js (NextAuth) adapter relations
   accounts            Account[]
@@ -399,4 +400,19 @@ model BidHistory {
   bid Bid @relation(fields: [bidId], references: [id], onDelete: Cascade)
 
   @@index([bidId])
+}
+
+// In-app notifications (award outcomes, auction concluded, etc.)
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  title     String
+  body      String
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }
