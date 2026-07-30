@@ -181,10 +181,25 @@ model DealerProfile {
   stripeSubscriptionId String?
   currentPeriodEnd     DateTime?
 
-  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   listings Listing[]
   payments Payment[]
   sales    Sale[]
+  contacts DealerContact[]
+}
+
+/** Sales people shown on listing pages (SGCM-style seller block). */
+model DealerContact {
+  id              String  @id @default(cuid())
+  dealerId        String
+  name            String
+  phone           String
+  whatsappEnabled Boolean @default(true)
+  order           Int     @default(0)
+
+  dealer DealerProfile @relation(fields: [dealerId], references: [id], onDelete: Cascade)
+
+  @@index([dealerId])
 }
 
 model Listing {
@@ -202,6 +217,7 @@ model Listing {
   transmission Transmission
   engineCc     Int?
   colour       String?
+  owners       Int? // number of previous owners
   regDate      DateTime? // SG registration date
   coeExpiry    DateTime? // COE expiry, important in Singapore
   depreciation Decimal?      @db.Decimal(12, 2) // SGD per year

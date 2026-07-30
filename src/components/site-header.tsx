@@ -88,7 +88,7 @@ export async function SiteHeader() {
                   className={buttonVariants({ size: "sm", variant: "ghost" })}
                 >
                   <HeartIcon />
-                  <span className="hidden sm:inline">Favourites</span>
+                  <span className="hidden sm:inline">Shortlist</span>
                 </Link>
               ) : null}
               {dash ? (

@@ -21,6 +21,7 @@ export function listingDataFromInput(input: ListingInput) {
     transmission: input.transmission,
     engineCc: input.engineCc ?? null,
     colour: input.colour ?? null,
+    owners: input.owners ?? null,
     regDate: input.regDate ?? null,
     coeExpiry: input.coeExpiry ?? null,
     depreciation: input.depreciation != null ? new Prisma.Decimal(input.depreciation) : null,

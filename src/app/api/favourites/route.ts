@@ -13,7 +13,7 @@ export async function POST(req: Request) {
   }
   if (session.user.role !== "BUYER") {
     return NextResponse.json(
-      { error: "Only buyer accounts can save favourites" },
+      { error: "Only buyer accounts can save to shortlist" },
       { status: 403 },
     );
   }

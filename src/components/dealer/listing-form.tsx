@@ -225,6 +225,17 @@ export function ListingForm({
           <Field label="Colour (optional)" error={errors.colour?.message}>
             <input className={controlClass} placeholder="Silver" {...register("colour")} />
           </Field>
+          <Field label="Number of owners (optional)" error={errors.owners?.message}>
+            <input
+              className={controlClass}
+              type="number"
+              inputMode="numeric"
+              min={1}
+              max={20}
+              placeholder="1"
+              {...register("owners")}
+            />
+          </Field>
           <Field label="Registration year" error={errors.year?.message}>
             <input
               className={controlClass}

@@ -1,21 +1,15 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import {
-  ChevronLeftIcon,
-  BadgeCheckIcon,
-  CalendarClockIcon,
-  EyeIcon,
-} from "lucide-react";
+import { ChevronLeftIcon, CalendarClockIcon, EyeIcon } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { SiteHeader } from "@/components/site-header";
 import { Gallery } from "@/components/listings/gallery";
-import { WhatsAppButton } from "@/components/listings/whatsapp-button";
 import { EnquiryForm } from "@/components/listings/enquiry-form";
 import { FavouriteButton } from "@/components/listings/favourite-button";
-import { Badge } from "@/components/ui/badge";
+import { SellerInformation } from "@/components/listings/seller-information";
 import {
   formatPrice,
   formatDepreciation,
@@ -82,14 +76,17 @@ export default async function ListingDetailPage({ params }: { params: Params }) 
   const listing = await prisma.listing.findUnique({
     where: { id },
     include: {
-      dealer: true,
+      dealer: {
+        include: {
+          contacts: { orderBy: [{ order: "asc" }, { name: "asc" }] },
+        },
+      },
       images: { orderBy: { order: "asc" } },
     },
   });
 
   if (!listing || listing.status === "DRAFT") notFound();
 
-  // Count the view (best-effort, never blocks rendering).
   prisma.listing
     .update({ where: { id }, data: { viewCount: { increment: 1 } } })
     .catch(() => {});
@@ -104,6 +101,10 @@ export default async function ListingDetailPage({ params }: { params: Params }) 
     });
     initialFavourited = Boolean(fav);
   }
+
+  const vehicleCount = await prisma.listing.count({
+    where: { dealerId: listing.dealerId, status: "FOR_SALE" },
+  });
 
   const price = Number(listing.price);
   const depreciation = listing.depreciation != null ? Number(listing.depreciation) : null;
@@ -125,11 +126,20 @@ export default async function ListingDetailPage({ params }: { params: Params }) 
           Back to results
         </Link>
 
-        {/* Headline: title + price surface immediately, incl. on mobile */}
         <div className="mb-5">
-          <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-            {listing.title}
-          </h1>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
+              {listing.title}
+            </h1>
+            {isBuyer ? (
+              <div className="w-full sm:w-auto sm:min-w-[200px]">
+                <FavouriteButton
+                  listingId={listing.id}
+                  initialFavourited={initialFavourited}
+                />
+              </div>
+            ) : null}
+          </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="text-2xl font-bold text-foreground sm:text-3xl">
               {formatPrice(price)}
@@ -153,11 +163,9 @@ export default async function ListingDetailPage({ params }: { params: Params }) 
         </div>
 
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px]">
-          {/* Left: gallery + specs + description */}
           <div className="min-w-0 space-y-8">
             <Gallery images={images} title={listing.title} />
 
-            {/* COE highlight: SG buyers check this first */}
             {listing.coeExpiry ? (
               <div className="flex items-center gap-3 rounded-xl bg-primary/10 px-4 py-3 ring-1 ring-primary/20">
                 <CalendarClockIcon className="size-5 shrink-0 text-primary" />
@@ -189,6 +197,10 @@ export default async function ListingDetailPage({ params }: { params: Params }) 
                 <SpecRow label="Body type" value={humanizeEnum(listing.bodyType)} />
                 <SpecRow label="Colour" value={listing.colour || "n/a"} />
                 <SpecRow
+                  label="Number of owners"
+                  value={listing.owners != null ? listing.owners : "n/a"}
+                />
+                <SpecRow
                   label="Registration date"
                   value={listing.regDate ? formatDate(listing.regDate) : "n/a"}
                 />
@@ -207,39 +219,20 @@ export default async function ListingDetailPage({ params }: { params: Params }) 
             ) : null}
           </div>
 
-          {/* Right: dealer + contact (sticky on desktop) */}
           <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-            <div className="rounded-xl bg-card p-5 ring-1 ring-foreground/10">
-              <div className="mb-1 flex items-center gap-2">
-                <h2 className="font-heading text-lg font-semibold">
-                  {listing.dealer.businessName}
-                </h2>
-                {listing.dealer.verified ? (
-                  <Badge variant="secondary" className="gap-1">
-                    <BadgeCheckIcon className="size-3.5 text-primary" />
-                    Verified
-                  </Badge>
-                ) : null}
-              </div>
-              <p className="mb-4 text-xs text-muted-foreground">
-                {listing.dealer.verified
-                  ? "Identity verified by CARSaction"
-                  : "Dealer on CARSaction"}
-              </p>
-
-              <div className="space-y-2">
-                <WhatsAppButton
-                  phone={listing.dealer.whatsappNumber}
-                  make={listing.make}
-                  model={listing.model}
-                  year={listing.year}
-                  listingUrl={listingUrl}
-                />
-                {isBuyer ? (
-                  <FavouriteButton listingId={listing.id} initialFavourited={initialFavourited} />
-                ) : null}
-              </div>
-            </div>
+            <SellerInformation
+              businessName={listing.dealer.businessName}
+              address={listing.dealer.address}
+              mainPhone={listing.dealer.whatsappNumber}
+              verified={listing.dealer.verified}
+              contacts={listing.dealer.contacts}
+              vehicleCount={vehicleCount}
+              dealerId={listing.dealerId}
+              make={listing.make}
+              model={listing.model}
+              year={listing.year}
+              listingUrl={listingUrl}
+            />
 
             <div className="rounded-xl bg-card p-5 ring-1 ring-foreground/10">
               <h2 className="mb-1 font-heading text-lg font-semibold">Enquire about this car</h2>

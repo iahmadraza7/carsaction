@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SearchXIcon } from "lucide-react";
 
 import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
 import { SiteHeader } from "@/components/site-header";
 import { ListingCard, type ListingCardData } from "@/components/listings/listing-card";
 import { Reveal } from "@/components/motion/reveal";
@@ -81,8 +82,10 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
   const transmissions = many(sp.transmission).filter(isTransmission);
   const sort = one(sp.sort);
   const page = Math.max(1, toInt(one(sp.page)) ?? 1);
+  const dealerId = one(sp.dealerId);
 
   const where: Prisma.ListingWhereInput = { status: "FOR_SALE" };
+  if (dealerId) where.dealerId = dealerId;
   if (makesSel.length === 1) where.make = makesSel[0];
   else if (makesSel.length > 1) where.make = { in: makesSel };
   if (modelsSel.length === 1) where.model = modelsSel[0];
@@ -121,7 +124,10 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
           : { createdAt: "desc" }
     : { createdAt: "desc" };
 
-  const [liveMakeRows, total, rows] = await Promise.all([
+  const session = await auth();
+  const isBuyer = session?.user?.role === "BUYER";
+
+  const [liveMakeRows, total, rows, dealer] = await Promise.all([
     prisma.listing.findMany({
       where: { status: "FOR_SALE" },
       distinct: ["make"],
@@ -136,7 +142,25 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
       take: PAGE_SIZE,
       include: { images: { orderBy: { order: "asc" }, take: 1 } },
     }),
+    dealerId
+      ? prisma.dealerProfile.findUnique({
+          where: { id: dealerId },
+          select: { businessName: true },
+        })
+      : Promise.resolve(null),
   ]);
+
+  const shortlistedIds = new Set<string>();
+  if (isBuyer && rows.length > 0) {
+    const favs = await prisma.favourite.findMany({
+      where: {
+        userId: session!.user.id,
+        listingId: { in: rows.map((r) => r.id) },
+      },
+      select: { listingId: true },
+    });
+    for (const f of favs) shortlistedIds.add(f.listingId);
+  }
 
   const makes = SG_MAKES;
   const modelsByMake: Record<string, string[]> = { ...SG_MODELS_BY_MAKE };
@@ -168,6 +192,7 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
     else if (values.length > 1) baseParams[k] = values;
   }
   if (sort) baseParams.sort = sort;
+  if (dealerId) baseParams.dealerId = dealerId;
 
   return (
     <div className="min-h-dvh bg-background">
@@ -176,10 +201,18 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
         <div className="mb-6">
           <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-            Used cars for sale
+            {dealer ? `Cars from ${dealer.businessName}` : "Used cars for sale"}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {total} {total === 1 ? "car" : "cars"} available in Singapore
+            {dealer ? (
+              <>
+                {" · "}
+                <Link href="/cars" className="text-primary hover:underline">
+                  Clear seller filter
+                </Link>
+              </>
+            ) : null}
           </p>
           <div className="mt-4">
             <p className="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">
@@ -236,7 +269,11 @@ export default async function CarsPage({ searchParams }: { searchParams: SearchP
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                   {listings.map((l, i) => (
                     <Reveal key={l.id} y={16} duration={0.5} delay={(i % 3) * 0.06}>
-                      <ListingCard listing={l} />
+                      <ListingCard
+                        listing={l}
+                        showShortlist={isBuyer}
+                        initialShortlisted={shortlistedIds.has(l.id)}
+                      />
                     </Reveal>
                   ))}
                 </div>

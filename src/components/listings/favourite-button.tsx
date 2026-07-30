@@ -19,7 +19,6 @@ export function FavouriteButton({
 
   async function toggle() {
     setPending(true);
-    // Optimistic update.
     const previous = favourited;
     setFavourited(!previous);
     try {
@@ -31,10 +30,10 @@ export function FavouriteButton({
       if (!res.ok) throw new Error();
       const data = (await res.json()) as { favourited: boolean };
       setFavourited(data.favourited);
-      toast.success(data.favourited ? "Saved to favourites" : "Removed from favourites");
+      toast.success(data.favourited ? "Added to shortlist" : "Removed from shortlist");
     } catch {
       setFavourited(previous);
-      toast.error("Could not update favourites");
+      toast.error("Could not update shortlist");
     } finally {
       setPending(false);
     }
@@ -43,7 +42,7 @@ export function FavouriteButton({
   return (
     <Button variant="outline" size="lg" onClick={toggle} disabled={pending} className="w-full">
       <HeartIcon className={cn(favourited && "fill-primary text-primary")} />
-      {favourited ? "Saved" : "Save to favourites"}
+      {favourited ? "On shortlist" : "Add to shortlist"}
     </Button>
   );
 }

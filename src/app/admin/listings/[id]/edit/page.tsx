@@ -49,6 +49,7 @@ export default async function AdminEditListingPage({
     transmission: listing.transmission,
     engineCc: listing.engineCc != null ? String(listing.engineCc) : "",
     colour: listing.colour ?? "",
+    owners: listing.owners != null ? String(listing.owners) : "",
     regDate: toDateInput(listing.regDate),
     coeExpiry: toDateInput(listing.coeExpiry),
     depreciation: decToString(listing.depreciation),

@@ -7,6 +7,7 @@ import { HeaderNotifications } from "@/components/notifications/header-notificat
 const NAV = [
   { href: "/dealer/dashboard", label: "Dashboard" },
   { href: "/dealer/listings", label: "Listings" },
+  { href: "/dealer/contacts", label: "Sales contacts" },
   { href: "/dealer/bids", label: "Repo bids" },
   { href: "/dealer/enquiries", label: "Enquiries" },
 ];

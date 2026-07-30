@@ -16,7 +16,7 @@ export default async function SignupPage() {
   return (
     <AuthShell
       title="Create your account"
-      description="Save favourites and enquire on cars"
+      description="Shortlist cars and enquire with dealers"
       footer={
         <>
           Already have an account?{" "}

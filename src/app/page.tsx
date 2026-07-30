@@ -75,6 +75,19 @@ export default async function Home() {
     }),
   ]);
 
+  const isBuyer = user?.role === "BUYER";
+  const shortlistedIds = new Set<string>();
+  if (isBuyer && featuredRaw.length > 0) {
+    const favs = await prisma.favourite.findMany({
+      where: {
+        userId: user!.id,
+        listingId: { in: featuredRaw.map((l) => l.id) },
+      },
+      select: { listingId: true },
+    });
+    for (const f of favs) shortlistedIds.add(f.listingId);
+  }
+
   const searchMakes = SG_MAKES;
   const chipMakes =
     makeRows.length > 0
@@ -245,7 +258,11 @@ export default async function Home() {
             <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
               {featured.map((listing, i) => (
                 <Reveal key={listing.id} delay={(i % 3) * 0.08}>
-                  <ListingCard listing={listing} />
+                  <ListingCard
+                    listing={listing}
+                    showShortlist={isBuyer}
+                    initialShortlisted={shortlistedIds.has(listing.id)}
+                  />
                 </Reveal>
               ))}
             </div>

@@ -43,6 +43,10 @@ export const listingSchema = z.object({
   transmission: z.enum(TRANSMISSIONS),
   engineCc: optionalInt,
   colour: optionalText(40),
+  owners: z.preprocess(
+    emptyToUndef,
+    z.coerce.number().int().min(1, "Enter at least 1").max(20).optional(),
+  ),
   regDate: optionalDate,
   coeExpiry: optionalDate,
   depreciation: optionalMoney,
@@ -89,6 +93,7 @@ export interface ListingFormValues {
   transmission: string;
   engineCc: string;
   colour: string;
+  owners: string;
   regDate: string;
   coeExpiry: string;
   depreciation: string;
@@ -110,6 +115,7 @@ export const emptyListingForm: ListingFormValues = {
   transmission: "",
   engineCc: "",
   colour: "",
+  owners: "",
   regDate: "",
   coeExpiry: "",
   depreciation: "",

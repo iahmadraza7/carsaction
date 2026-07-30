@@ -10,14 +10,13 @@ import { ListingCard, type ListingCardData } from "@/components/listings/listing
 import { buttonVariants } from "@/components/ui/button";
 
 export const metadata: Metadata = {
-  title: "Your favourites",
+  title: "Your shortlist",
   robots: { index: false },
 };
 
 export default async function FavouritesPage() {
   const session = await auth();
   if (!session?.user) redirect("/login?callbackUrl=/favourites");
-  // Only buyers keep a favourites list.
   if (session.user.role !== "BUYER") redirect("/");
 
   const favourites = await prisma.favourite.findMany({
@@ -47,7 +46,7 @@ export default async function FavouritesPage() {
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">
         <div className="mb-6">
           <h1 className="font-heading text-2xl font-semibold tracking-tight sm:text-3xl">
-            Your favourites
+            Your shortlist
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             {listings.length} {listings.length === 1 ? "saved car" : "saved cars"}
@@ -59,7 +58,7 @@ export default async function FavouritesPage() {
             <div className="mb-4 flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
               <HeartIcon className="size-6" />
             </div>
-            <h3 className="text-lg font-semibold">No favourites yet</h3>
+            <h3 className="text-lg font-semibold">No cars shortlisted yet</h3>
             <p className="mt-1 max-w-sm text-sm text-muted-foreground">
               Tap the heart on any car to save it here for later.
             </p>
@@ -70,7 +69,12 @@ export default async function FavouritesPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {listings.map((l) => (
-              <ListingCard key={l.id} listing={l} />
+              <ListingCard
+                key={l.id}
+                listing={l}
+                showShortlist
+                initialShortlisted
+              />
             ))}
           </div>
         )}
