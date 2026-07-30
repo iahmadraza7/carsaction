@@ -2,7 +2,7 @@
 import { redirect } from "next/navigation";
 import type { Metadata } from "next";
 import { CheckCircle2Icon, PlusIcon } from "lucide-react";
-import { PaymentStatus, SubStatus } from "@prisma/client";
+import { PaymentStatus, SubStatus, SubscriptionSource } from "@prisma/client";
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
@@ -18,7 +18,7 @@ import {
   getDealerProfileByUserId,
   getActivePlans,
   humanizeSubStatus,
-  isSubscriptionActive,
+  dealerHasActiveAccess,
 } from "@/lib/subscription";
 
 export const metadata: Metadata = { title: "Dealer dashboard | CARSaction" };
@@ -56,7 +56,8 @@ export default async function DealerDashboardPage({
 
   const salesTotal = sales.reduce((sum, s) => sum + Number(s.salePrice), 0);
 
-  const active = isSubscriptionActive(profile?.subscriptionStatus);
+  const active = dealerHasActiveAccess(profile);
+  const isManual = profile?.subscriptionSource === SubscriptionSource.MANUAL;
   const currentPlan = profile?.tier
     ? plans.find((p) => p.tier === profile.tier)
     : undefined;
@@ -88,26 +89,55 @@ export default async function DealerDashboardPage({
         <Card className="max-w-2xl">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <CardTitle>Subscription</CardTitle>
-            <Badge variant={statusVariant}>
-              {humanizeSubStatus(profile?.subscriptionStatus)}
-            </Badge>
+            <div className="flex flex-wrap items-center gap-2">
+              {isManual && active ? (
+                <Badge variant="secondary">Complimentary</Badge>
+              ) : null}
+              <Badge variant={statusVariant}>
+                {humanizeSubStatus(profile?.subscriptionStatus)}
+              </Badge>
+            </div>
           </CardHeader>
           <CardContent className="flex flex-col gap-4 text-sm">
             <div className="grid grid-cols-2 gap-3">
               <Field label="Plan" value={currentPlan ? currentPlan.name : "n/a"} />
               <Field
                 label="Monthly price"
-                value={currentPlan ? `${formatPrice(Number(currentPlan.monthlyPrice))}/mo` : "n/a"}
+                value={
+                  isManual && active
+                    ? "Complimentary"
+                    : currentPlan
+                      ? `${formatPrice(Number(currentPlan.monthlyPrice))}/mo`
+                      : "n/a"
+                }
               />
               <Field
                 label="Listings used"
                 value={limit == null ? `${listingCount} / Unlimited` : `${listingCount} / ${limit}`}
               />
               <Field
-                label={profile?.subscriptionStatus === SubStatus.CANCELLED ? "Access until" : "Renews"}
-                value={formatDate(profile?.currentPeriodEnd)}
+                label={
+                  isManual && active
+                    ? "Access until"
+                    : profile?.subscriptionStatus === SubStatus.CANCELLED
+                      ? "Access until"
+                      : "Renews"
+                }
+                value={
+                  isManual && active && !profile?.currentPeriodEnd
+                    ? "Open-ended"
+                    : formatDate(profile?.currentPeriodEnd)
+                }
               />
             </div>
+
+            {isManual && active ? (
+              <p className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground">
+                Your plan was granted by CARSaction. Billing portal is not available for
+                complimentary accounts. You can still start a paid Stripe plan from Pricing if you
+                want to switch.
+              </p>
+            ) : null}
 
             {profile?.subscriptionStatus === SubStatus.PAST_DUE ? (
               <p className="rounded-md bg-destructive/10 px-3 py-2 text-xs text-destructive">
@@ -117,7 +147,14 @@ export default async function DealerDashboardPage({
             ) : null}
 
             <div className="flex flex-wrap gap-2 pt-1">
-              {active ? (
+              {active && isManual ? (
+                <Link
+                  href="/pricing"
+                  className={buttonVariants({ variant: "outline", size: "default" })}
+                >
+                  Switch to a paid plan
+                </Link>
+              ) : active ? (
                 <>
                   <ManageBillingButton />
                   <Link
@@ -127,7 +164,7 @@ export default async function DealerDashboardPage({
                     Change plan
                   </Link>
                 </>
-              ) : profile?.stripeCustomerId ? (
+              ) : profile?.stripeCustomerId && !isManual ? (
                 <>
                   <ManageBillingButton label="Update billing" />
                   <Link href="/pricing" className={buttonVariants({ variant: "default" })}>

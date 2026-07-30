@@ -13,6 +13,23 @@ export function isSubscriptionActive(status: SubStatus | null | undefined): bool
   return status === SubStatus.ACTIVE;
 }
 
+/**
+ * ACTIVE subscription that has not passed an optional expiry (manual grants).
+ * Use this for gating listings / bidding, not raw status alone.
+ */
+export function dealerHasActiveAccess(
+  profile:
+    | Pick<DealerProfile, "subscriptionStatus" | "currentPeriodEnd">
+    | null
+    | undefined,
+): boolean {
+  if (!profile || !isSubscriptionActive(profile.subscriptionStatus)) return false;
+  if (profile.currentPeriodEnd && profile.currentPeriodEnd.getTime() < Date.now()) {
+    return false;
+  }
+  return true;
+}
+
 /** Map a Stripe Price ID (from env) back to our internal tier. */
 export function tierForPriceId(priceId: string | null | undefined): Tier | null {
   if (!priceId) return null;
@@ -102,14 +119,20 @@ export function getActivePlans() {
  *  - Must be under the plan's listingLimit (null = unlimited).
  */
 export async function canCreateListing(
-  profile: Pick<DealerProfile, "id" | "subscriptionStatus" | "tier">,
+  profile: Pick<DealerProfile, "id" | "subscriptionStatus" | "tier" | "currentPeriodEnd">,
 ): Promise<{ ok: boolean; reason?: string; limit: number | null; used: number }> {
   const used = await prisma.listing.count({ where: { dealerId: profile.id } });
 
-  if (!isSubscriptionActive(profile.subscriptionStatus)) {
+  if (!dealerHasActiveAccess(profile)) {
+    const expired =
+      profile.subscriptionStatus === SubStatus.ACTIVE &&
+      profile.currentPeriodEnd != null &&
+      profile.currentPeriodEnd.getTime() < Date.now();
     return {
       ok: false,
-      reason: "An active subscription is required to publish listings.",
+      reason: expired
+        ? "Your complimentary subscription has expired. Contact CARSaction or subscribe to continue."
+        : "An active subscription is required to publish listings.",
       limit: null,
       used,
     };

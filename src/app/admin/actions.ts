@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { Role, Prisma } from "@prisma/client";
+import { Role, Prisma, Tier, SubStatus, SubscriptionSource } from "@prisma/client";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
@@ -72,6 +72,76 @@ export async function setDealerVerified(
   await prisma.dealerProfile.update({
     where: { id: parsed.data.dealerId },
     data: { verified: parsed.data.verified },
+  });
+  revalidatePath("/admin/dealers");
+  return { ok: true };
+}
+
+const grantSchema = z.object({
+  dealerId: z.string().min(1),
+  tier: z.nativeEnum(Tier),
+  /** ISO date string YYYY-MM-DD, or empty for open-ended. */
+  expiresOn: z.preprocess(
+    (v) => (v === "" || v == null ? null : v),
+    z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/, "Use YYYY-MM-DD")
+      .nullable(),
+  ),
+});
+
+/** Admin: grant or change a complimentary (MANUAL) subscription. */
+export async function setDealerSubscriptionManual(
+  input: z.infer<typeof grantSchema>,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const parsed = grantSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Check tier and expiry date." };
+
+  const { dealerId, tier, expiresOn } = parsed.data;
+  const currentPeriodEnd = expiresOn
+    ? new Date(`${expiresOn}T23:59:59.999Z`)
+    : null;
+
+  if (currentPeriodEnd && currentPeriodEnd.getTime() < Date.now()) {
+    return { ok: false, error: "Expiry must be today or a future date." };
+  }
+
+  await prisma.dealerProfile.update({
+    where: { id: dealerId },
+    data: {
+      subscriptionStatus: SubStatus.ACTIVE,
+      subscriptionSource: SubscriptionSource.MANUAL,
+      tier,
+      currentPeriodEnd,
+      stripeSubscriptionId: null,
+    },
+  });
+  revalidatePath("/admin/dealers");
+  return { ok: true };
+}
+
+const revokeSchema = z.object({
+  dealerId: z.string().min(1),
+});
+
+/** Admin: revoke a subscription (sets NONE). Safe for MANUAL and STRIPE grants. */
+export async function revokeDealerSubscription(
+  input: z.infer<typeof revokeSchema>,
+): Promise<ActionResult> {
+  await requireAdmin();
+  const parsed = revokeSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Invalid input" };
+
+  await prisma.dealerProfile.update({
+    where: { id: parsed.data.dealerId },
+    data: {
+      subscriptionStatus: SubStatus.NONE,
+      subscriptionSource: SubscriptionSource.MANUAL,
+      tier: null,
+      currentPeriodEnd: null,
+      stripeSubscriptionId: null,
+    },
   });
   revalidatePath("/admin/dealers");
   return { ok: true };

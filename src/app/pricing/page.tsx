@@ -1,7 +1,7 @@
 ﻿import Link from "next/link";
 import type { Metadata } from "next";
 import { CheckIcon } from "lucide-react";
-import { Tier } from "@prisma/client";
+import { Tier, SubscriptionSource } from "@prisma/client";
 
 import { auth } from "@/auth";
 import { buttonVariants } from "@/components/ui/button";
@@ -9,7 +9,7 @@ import { SiteHeader } from "@/components/site-header";
 import { SubscribeButton } from "@/components/billing/subscribe-button";
 import { ManageBillingButton } from "@/components/billing/manage-billing-button";
 import { formatPrice } from "@/lib/format";
-import { getActivePlans, getDealerProfileByUserId, isSubscriptionActive } from "@/lib/subscription";
+import { getActivePlans, getDealerProfileByUserId, dealerHasActiveAccess } from "@/lib/subscription";
 import { isStripeConfigured } from "@/lib/stripe";
 
 export const metadata: Metadata = {
@@ -48,7 +48,8 @@ export default async function PricingPage({
   const user = session?.user;
   const isDealer = user?.role === "DEALER";
   const profile = isDealer ? await getDealerProfileByUserId(user.id) : null;
-  const activeTier = isSubscriptionActive(profile?.subscriptionStatus) ? profile?.tier : null;
+  const activeTier = dealerHasActiveAccess(profile) ? profile?.tier : null;
+  const isManual = profile?.subscriptionSource === SubscriptionSource.MANUAL;
   const stripeReady = isStripeConfigured();
 
   return (
@@ -124,14 +125,27 @@ export default async function PricingPage({
                   {isCurrent ? (
                     <div className="flex flex-col gap-2">
                       <span className="inline-flex w-fit items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary ring-1 ring-primary/20">
-                        Your current plan
+                        {isManual ? "Your current plan (complimentary)" : "Your current plan"}
                       </span>
-                      <ManageBillingButton className="w-full" />
+                      {isManual ? (
+                        <p className="text-center text-xs text-muted-foreground">
+                          Granted by CARSaction. Choose another plan below to switch to paid
+                          billing.
+                        </p>
+                      ) : (
+                        <ManageBillingButton className="w-full" />
+                      )}
                     </div>
                   ) : isDealer ? (
                     <SubscribeButton
                       tier={tier}
-                      label={activeTier ? `Switch to ${plan.name}` : `Choose ${plan.name}`}
+                      label={
+                        activeTier
+                          ? isManual
+                            ? `Switch to paid ${plan.name}`
+                            : `Switch to ${plan.name}`
+                          : `Choose ${plan.name}`
+                      }
                       variant={highlight ? "default" : "outline"}
                       className="w-full"
                     />

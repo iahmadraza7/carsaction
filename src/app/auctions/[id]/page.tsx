@@ -15,7 +15,7 @@ import { formatMileage, formatMonthYear, formatDate } from "@/lib/format";
 import { humanizeEnum } from "@/lib/listing-options";
 import {
   getDealerProfileByUserId,
-  isSubscriptionActive,
+  dealerHasActiveAccess,
 } from "@/lib/subscription";
 import { auctionWindowStatus, getOwnBidForVehicle } from "@/lib/bids";
 import { ensureVehicleClosedIfExpired } from "@/lib/auction-close";
@@ -147,7 +147,7 @@ export default async function AuctionDetailPage({ params }: { params: Params }) 
         }
       : null;
 
-    if (!isSubscriptionActive(dealer?.subscriptionStatus)) {
+    if (!dealerHasActiveAccess(dealer)) {
       bidPanel = (
         <div className="flex flex-col gap-3">
           <BidPanelGate kind="subscription" />

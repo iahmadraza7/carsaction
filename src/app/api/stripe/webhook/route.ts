@@ -1,6 +1,6 @@
 ﻿import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { PaymentStatus, Prisma, SubStatus } from "@prisma/client";
+import { PaymentStatus, Prisma, SubStatus, SubscriptionSource } from "@prisma/client";
 
 import { prisma } from "@/lib/prisma";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
@@ -9,6 +9,9 @@ import { tierForPriceId } from "@/lib/subscription";
 /**
  * Stripe webhook. This is the ONLY place subscription state is trusted; never
  * the browser redirect. Verifies the signature, then syncs DealerProfile.
+ *
+ * Manual (comped) subscriptions are never overwritten here, unless the dealer
+ * completes Stripe Checkout — that flips source to STRIPE and takes over.
  *
  * Test locally with:
  *   stripe listen --forward-to localhost:3000/api/stripe/webhook
@@ -46,7 +49,8 @@ export async function POST(req: Request) {
           const subscription = await stripe.subscriptions.retrieve(
             session.subscription as string,
           );
-          await syncSubscription(subscription);
+          // Checkout is an intentional paid takeover of any MANUAL grant.
+          await syncSubscription(subscription, { takeover: true });
         }
         break;
       }
@@ -65,8 +69,12 @@ export async function POST(req: Request) {
         const customerId =
           typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;
         if (customerId) {
+          // Never push PAST_DUE onto a manually granted complimentary sub.
           await prisma.dealerProfile.updateMany({
-            where: { stripeCustomerId: customerId },
+            where: {
+              stripeCustomerId: customerId,
+              subscriptionSource: SubscriptionSource.STRIPE,
+            },
             data: { subscriptionStatus: SubStatus.PAST_DUE },
           });
         }
@@ -74,7 +82,6 @@ export async function POST(req: Request) {
         break;
       }
       default:
-        // Unhandled event types are acknowledged so Stripe stops retrying.
         break;
     }
   } catch (err) {
@@ -85,7 +92,6 @@ export async function POST(req: Request) {
   return NextResponse.json({ received: true });
 }
 
-/** Map a Stripe subscription status onto our SubStatus enum. */
 function mapStatus(status: Stripe.Subscription.Status): SubStatus {
   switch (status) {
     case "active":
@@ -102,8 +108,36 @@ function mapStatus(status: Stripe.Subscription.Status): SubStatus {
   }
 }
 
-/** Write the current Stripe subscription state onto the matching DealerProfile. */
-async function syncSubscription(subscription: Stripe.Subscription) {
+async function findDealerForSubscription(subscription: Stripe.Subscription) {
+  const customerId =
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer.id;
+  const dealerProfileId = subscription.metadata?.dealerProfileId;
+
+  if (dealerProfileId) {
+    const byId = await prisma.dealerProfile.findUnique({ where: { id: dealerProfileId } });
+    if (byId) return byId;
+  }
+  return prisma.dealerProfile.findFirst({ where: { stripeCustomerId: customerId } });
+}
+
+/**
+ * Write Stripe subscription state onto the matching DealerProfile.
+ * @param takeover — true when the dealer just completed Checkout; flips MANUAL → STRIPE.
+ */
+async function syncSubscription(
+  subscription: Stripe.Subscription,
+  opts: { takeover?: boolean } = {},
+) {
+  const dealer = await findDealerForSubscription(subscription);
+  if (!dealer) return;
+
+  if (dealer.subscriptionSource === SubscriptionSource.MANUAL && !opts.takeover) {
+    // Complimentary grant stays authoritative until they pay via Checkout.
+    return;
+  }
+
   const customerId =
     typeof subscription.customer === "string"
       ? subscription.customer
@@ -113,37 +147,25 @@ async function syncSubscription(subscription: Stripe.Subscription) {
   const tier = tierForPriceId(priceId);
   const status = mapStatus(subscription.status);
 
-  // `current_period_end` lives on the subscription item in newer API versions
-  // and on the subscription itself in older ones; read whichever is present.
   const item = subscription.items.data[0] as unknown as { current_period_end?: number } | undefined;
   const periodEndUnix =
     item?.current_period_end ??
     (subscription as unknown as { current_period_end?: number }).current_period_end;
   const currentPeriodEnd = periodEndUnix ? new Date(periodEndUnix * 1000) : null;
 
-  // Prefer the id we stamped at checkout; fall back to the Stripe customer id.
-  const dealerProfileId = subscription.metadata?.dealerProfileId;
-
-  const data = {
-    subscriptionStatus: status,
-    tier: status === SubStatus.CANCELLED ? null : tier,
-    stripeSubscriptionId: subscription.id,
-    stripeCustomerId: customerId,
-    currentPeriodEnd,
-  };
-
-  if (dealerProfileId) {
-    await prisma.dealerProfile.updateMany({ where: { id: dealerProfileId }, data });
-  } else {
-    await prisma.dealerProfile.updateMany({ where: { stripeCustomerId: customerId }, data });
-  }
+  await prisma.dealerProfile.update({
+    where: { id: dealer.id },
+    data: {
+      subscriptionStatus: status,
+      subscriptionSource: SubscriptionSource.STRIPE,
+      tier: status === SubStatus.CANCELLED ? null : tier,
+      stripeSubscriptionId: subscription.id,
+      stripeCustomerId: customerId,
+      currentPeriodEnd,
+    },
+  });
 }
 
-/**
- * Record a subscription invoice as a Payment row (billing history). Idempotent
- * on stripeInvoiceId so Stripe retries don't create duplicates. This is the
- * source of truth for dealer billing history and admin revenue.
- */
 async function recordPayment(invoice: Stripe.Invoice, status: PaymentStatus) {
   const customerId =
     typeof invoice.customer === "string" ? invoice.customer : invoice.customer?.id;

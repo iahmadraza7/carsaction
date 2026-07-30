@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { getStripe, isStripeConfigured } from "@/lib/stripe";
 import { getDealerProfileByUserId, stripeCustomerExists } from "@/lib/subscription";
+import { SubscriptionSource } from "@prisma/client";
 
 function baseUrl(req: Request): string {
   return process.env.NEXT_PUBLIC_APP_URL || new URL(req.url).origin;
@@ -28,6 +29,16 @@ export async function POST(req: Request) {
   const profile = await getDealerProfileByUserId(session.user.id);
   if (!profile?.stripeCustomerId) {
     return NextResponse.json({ error: "No billing account yet. Subscribe first." }, { status: 400 });
+  }
+
+  if (profile.subscriptionSource === SubscriptionSource.MANUAL) {
+    return NextResponse.json(
+      {
+        error:
+          "Your plan is a complimentary grant. Billing portal is unavailable — subscribe via Pricing to switch to paid billing.",
+      },
+      { status: 400 },
+    );
   }
 
   // A stored id can be stale (seed placeholder, deleted customer, swapped

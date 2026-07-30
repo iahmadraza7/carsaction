@@ -39,6 +39,12 @@ enum Tier {
   PLATINUM
 }
 
+/** Who owns the subscription state. MANUAL grants are immune to Stripe webhooks. */
+enum SubscriptionSource {
+  STRIPE
+  MANUAL
+}
+
 enum BodyType {
   SEDAN
   SUV
@@ -175,7 +181,8 @@ model DealerProfile {
   logoUrl        String?
   verified       Boolean @default(false) // admin verifies dealers
 
-  subscriptionStatus   SubStatus @default(NONE)
+  subscriptionStatus   SubStatus           @default(NONE)
+  subscriptionSource   SubscriptionSource  @default(STRIPE)
   tier                 Tier?
   stripeCustomerId     String?
   stripeSubscriptionId String?

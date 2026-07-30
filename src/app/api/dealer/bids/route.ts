@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { auth } from "@/auth";
-import { getDealerProfileByUserId, isSubscriptionActive } from "@/lib/subscription";
+import { getDealerProfileByUserId, dealerHasActiveAccess } from "@/lib/subscription";
 import { placeBidSchema } from "@/lib/validations/bid";
 import { placeOrUpdateBid } from "@/lib/bids";
 
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   }
 
   const profile = await getDealerProfileByUserId(session.user.id);
-  if (!profile || !isSubscriptionActive(profile.subscriptionStatus)) {
+  if (!profile || !dealerHasActiveAccess(profile)) {
     return NextResponse.json(
       { error: "An active subscription is required to bid" },
       { status: 403 },
