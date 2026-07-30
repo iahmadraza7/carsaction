@@ -13,3 +13,5 @@ public/uploads/*
 !public/uploads/.gitkeep
 terminals
 agent-transcripts
+# Accidental nested clone on the VPS must never enter the image.
+carsaction
