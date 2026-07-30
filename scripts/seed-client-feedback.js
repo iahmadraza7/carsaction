@@ -1,17 +1,21 @@
 /**
  * Client feedback seed: macydealer account, owners backfill, sample sales contacts.
- * Run inside the app container: node scripts/seed-client-feedback.js
+ * Run on VPS:
+ *   docker cp scripts/seed-client-feedback.js carsaction-app:/tmp/seed-client-feedback.js
+ *   docker compose -p carsaction -f docker-compose.prod.yml exec -T app node /tmp/seed-client-feedback.js
  */
 const { PrismaClient } = require("@prisma/client");
-const bcrypt = require("bcryptjs");
 
 const prisma = new PrismaClient();
 
 const MACY_EMAIL = "macydealer@carsaction.sg";
 const MACY_PASSWORD = "MacyDealer2026!";
+// Precomputed bcrypt — bcryptjs is not available in the production image.
+const MACY_PASSWORD_HASH =
+  "$2b$10$Mk5QB9k2iv4GdyZqJlOxlO2KUr.8oy/NA/RoOVmxy5GAzbQ1ZWa0W";
 
 async function main() {
-  const passwordHash = await bcrypt.hash(MACY_PASSWORD, 10);
+  const passwordHash = MACY_PASSWORD_HASH;
 
   const user = await prisma.user.upsert({
     where: { email: MACY_EMAIL },
