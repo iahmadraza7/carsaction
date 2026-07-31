@@ -22,7 +22,9 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data: blob: https://images.unsplash.com https://*.unsplash.com https://picsum.photos https://fastly.picsum.photos",
       "font-src 'self' data:",
-      "connect-src 'self' https://api.stripe.com https://*.stripe.com",
+      // TextureLoader (WebGL hero) fetches remote images via XHR — needs connect-src, not only img-src.
+      "connect-src 'self' https://api.stripe.com https://*.stripe.com https://images.unsplash.com https://*.unsplash.com https://picsum.photos https://fastly.picsum.photos",
+      "worker-src 'self' blob:",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
       "object-src 'none'",
       "base-uri 'self'",
