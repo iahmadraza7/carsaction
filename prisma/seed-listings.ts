@@ -83,7 +83,7 @@ const CATALOGUE: SeedListing[] = [
     arf: "18500.00",
     description:
       "Well-maintained Corolla Altis with full agent service history. Fuel efficient and reliable. One owner.",
-    images: [img("1773063250524-38ac5eebd3c5"), img("1751601396408-57c61df2ab6b")],
+    images: [img("1621007947382-bb3c3994e3fb"), img("1492144534655-ae79c964c9d7")],
   },
   {
     title: "Honda Vezel 1.5 Hybrid X",

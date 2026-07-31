@@ -113,10 +113,10 @@ export default async function Home() {
       {/* Scroll-driven hero */}
       <ScrollHero images={HERO_IMAGES}>
         <div className="max-w-3xl">
-          <span className="mb-5 inline-flex items-center rounded-full border border-white/25 bg-white/10 px-3 py-1 text-xs font-medium text-white backdrop-blur">
-            Singapore car marketplace
-          </span>
-          <h1 className="text-4xl font-bold tracking-tight text-balance text-white sm:text-6xl">
+          <p className="mb-4 text-3xl font-bold tracking-tight text-white sm:text-5xl">
+            CARSaction
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-balance text-white/95 sm:text-4xl">
             Buy and sell cars in Singapore, the transparent way.
           </h1>
           <p className="mt-5 max-w-xl text-base text-pretty text-white/80 sm:text-lg">
@@ -242,7 +242,7 @@ export default async function Home() {
       {featured.length > 0 ? (
         <section className="bg-secondary/40">
           <div className="mx-auto w-full max-w-6xl px-4 py-20">
-            <Reveal className="mb-8 flex flex-wrap items-end justify-between gap-3">
+            <Reveal perspective className="mb-8 flex flex-wrap items-end justify-between gap-3">
               <div>
                 <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">Fresh on the market</h2>
                 <p className="mt-2 text-muted-foreground">Hand-picked cars listed by our dealers.</p>
@@ -255,47 +255,51 @@ export default async function Home() {
                 <ArrowRightIcon />
               </Link>
             </Reveal>
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {featured.map((listing, i) => (
-                <Reveal key={listing.id} delay={(i % 3) * 0.08}>
+            <Reveal perspective delay={0.08}>
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+                {featured.map((listing) => (
                   <ListingCard
+                    key={listing.id}
                     listing={listing}
                     showShortlist={isBuyer}
                     initialShortlisted={shortlistedIds.has(listing.id)}
                   />
-                </Reveal>
-              ))}
-            </div>
+                ))}
+              </div>
+            </Reveal>
           </div>
         </section>
       ) : null}
 
       {/* How it works */}
       <section className="mx-auto w-full max-w-6xl px-4 py-20">
-        <Reveal className="mx-auto max-w-2xl text-center">
+        <Reveal perspective className="mx-auto max-w-2xl text-center">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">How it works</h2>
           <p className="mt-3 text-muted-foreground">From browsing to a handshake, in three steps.</p>
         </Reveal>
-        <div className="mt-12 grid gap-5 md:grid-cols-3">
-          {[
-            {
-              icon: <SearchIcon />,
-              title: "Browse & filter",
-              body: "Search by make, price, year, mileage and body type. Compare the SG numbers side by side.",
-            },
-            {
-              icon: <MessageCircleIcon />,
-              title: "Message the dealer",
-              body: "WhatsApp the dealer directly from any listing, or send an enquiry. No account needed.",
-            },
-            {
-              icon: <HandshakeIcon />,
-              title: "Close the deal",
-              body: "Meet, inspect and buy with confidence from verified Singapore dealerships.",
-            },
-          ].map((step, i) => (
-            <Reveal key={step.title} delay={i * 0.1}>
-              <div className="flex h-full flex-col gap-3 rounded-2xl border bg-card p-6">
+        <Reveal perspective delay={0.1} className="mt-12">
+          <div className="grid gap-5 md:grid-cols-3">
+            {[
+              {
+                icon: <SearchIcon />,
+                title: "Browse & filter",
+                body: "Search by make, price, year, mileage and body type. Compare the SG numbers side by side.",
+              },
+              {
+                icon: <MessageCircleIcon />,
+                title: "Message the dealer",
+                body: "WhatsApp the dealer directly from any listing, or send an enquiry. No account needed.",
+              },
+              {
+                icon: <HandshakeIcon />,
+                title: "Close the deal",
+                body: "Meet, inspect and buy with confidence from verified Singapore dealerships.",
+              },
+            ].map((step, i) => (
+              <div
+                key={step.title}
+                className="flex h-full flex-col gap-3 rounded-2xl border bg-card p-6"
+              >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex size-9 items-center justify-center rounded-xl bg-primary/10 text-primary [&_svg]:size-4.5">
                     {step.icon}
@@ -307,14 +311,14 @@ export default async function Home() {
                 <h3 className="text-lg font-semibold">{step.title}</h3>
                 <p className="text-sm text-muted-foreground">{step.body}</p>
               </div>
-            </Reveal>
-          ))}
-        </div>
+            ))}
+          </div>
+        </Reveal>
       </section>
 
       {/* Repo bidding */}
       <section className="mx-auto w-full max-w-6xl px-4 py-20">
-        <Reveal>
+        <Reveal perspective>
           <div className="relative overflow-hidden rounded-3xl border bg-foreground px-6 py-14 text-center text-background sm:px-12">
             <div className="mx-auto max-w-2xl">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-background/15 px-3 py-1 text-xs font-medium">
@@ -358,7 +362,7 @@ export default async function Home() {
       {/* Final CTA */}
       <section className="border-t bg-card">
         <div className="mx-auto w-full max-w-6xl px-4 py-20 text-center">
-          <Reveal>
+          <Reveal perspective>
             <h2 className="mx-auto max-w-2xl text-3xl font-bold tracking-tight text-balance sm:text-4xl">
               Ready to find your next car?
             </h2>

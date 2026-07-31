@@ -11,6 +11,11 @@ type RevealProps = {
   delay?: number;
   duration?: number;
   once?: boolean;
+  /**
+   * Light 3D enter: perspective + slight rotateX / translateZ.
+   * Use on homepage section compositions (not dense filter UIs).
+   */
+  perspective?: boolean;
 };
 
 /**
@@ -24,11 +29,31 @@ export function Reveal({
   delay = 0,
   duration = 0.6,
   once = true,
+  perspective = false,
 }: RevealProps) {
   const reduce = useReducedMotion();
 
   if (reduce) {
     return <div className={className}>{children}</div>;
+  }
+
+  if (perspective) {
+    return (
+      <div
+        className={className}
+        style={{ perspective: 1200, perspectiveOrigin: "50% 40%" }}
+      >
+        <motion.div
+          initial={{ opacity: 0, y: y + 8, rotateX: 8, z: -40 }}
+          whileInView={{ opacity: 1, y: 0, rotateX: 0, z: 0 }}
+          viewport={{ once, amount: 0.22 }}
+          transition={{ duration: duration + 0.15, delay, ease: [0.22, 1, 0.36, 1] }}
+          style={{ transformStyle: "preserve-3d", transformOrigin: "50% 80%" }}
+        >
+          {children}
+        </motion.div>
+      </div>
+    );
   }
 
   return (
