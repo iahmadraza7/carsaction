@@ -1,24 +1,18 @@
 "use client";
 
 import * as React from "react";
-import dynamic from "next/dynamic";
 import Image from "next/image";
 import {
   motion,
   useReducedMotion,
   useScroll,
   useTransform,
+  type MotionValue,
 } from "framer-motion";
 
-const HeroCanvas = dynamic(
-  () => import("@/components/motion/hero-canvas").then((m) => m.HeroCanvas),
-  { ssr: false },
-);
-
 /**
- * Sticky WebGL hero: tall scroll track drives a Three.js camera through car
- * image planes. Brand copy stays as HTML for SEO / clickability. Reduced-motion
- * and offscreen paths skip or pause the Canvas.
+ * Sticky hero with a simple 3-image scroll crossfade.
+ * Images stay full-bleed via object-cover (correct aspect, no stretch).
  */
 export function ScrollHero({
   images,
@@ -28,76 +22,65 @@ export function ScrollHero({
   children: React.ReactNode;
 }) {
   const ref = React.useRef<HTMLDivElement>(null);
-  const stickyRef = React.useRef<HTMLDivElement>(null);
   const reduce = useReducedMotion();
-  const list = images.length > 0 ? images : ["/logo.png"];
-  const [active, setActive] = React.useState(true);
-  const [isMobile, setIsMobile] = React.useState(false);
-
-  React.useEffect(() => {
-    const mq = window.matchMedia("(max-width: 768px)");
-    const apply = () => setIsMobile(mq.matches);
-    apply();
-    mq.addEventListener("change", apply);
-    return () => mq.removeEventListener("change", apply);
-  }, []);
-
-  React.useEffect(() => {
-    const el = stickyRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      ([entry]) => setActive(entry.isIntersecting),
-      { threshold: 0.05 },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [reduce]);
+  // Hard-cap at 3 slides for a clean transition
+  const list = (images.length > 0 ? images : ["/logo.png"]).slice(0, 3);
 
   const { scrollYProgress } = useScroll({
     target: ref,
     offset: ["start start", "end end"],
   });
 
-  const contentY = useTransform(scrollYProgress, [0, 1], [0, -32]);
-  const contentOpacity = useTransform(scrollYProgress, [0, 0.85, 1], [1, 1, 0.88]);
-  const indicatorOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0]);
+  const contentY = useTransform(scrollYProgress, [0, 1], [0, -24]);
+  const contentOpacity = useTransform(scrollYProgress, [0, 0.9, 1], [1, 1, 0.92]);
+  const indicatorOpacity = useTransform(scrollYProgress, [0, 0.18], [1, 0]);
 
   if (reduce) {
     return (
       <section className="relative isolate flex min-h-svh items-center overflow-hidden">
         <div className="absolute inset-0 -z-10">
-          <Image src={list[0]} alt="" fill priority sizes="100vw" className="object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/55 to-black/90" />
-          <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_30%_20%,rgba(255,138,61,0.18),transparent_55%)]" />
+          <Image
+            src={list[0]}
+            alt=""
+            fill
+            priority
+            sizes="100vw"
+            className="object-cover object-center"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/50 to-black/30" />
+          <div className="absolute inset-0 bg-gradient-to-b from-black/35 via-transparent to-black/70" />
         </div>
         <div className="mx-auto w-full max-w-6xl px-4">{children}</div>
       </section>
     );
   }
 
-  const trackVh = isMobile ? 160 : 200;
+  // ~70vh per slide — enough to crossfade without feeling stuck
+  const trackVh = Math.max(180, list.length * 70);
 
   return (
     <div ref={ref} className="relative" style={{ height: `${trackVh}vh` }}>
-      <div
-        ref={stickyRef}
-        className="sticky top-0 flex h-svh items-center overflow-hidden bg-[#0c0a08]"
-      >
+      <div className="sticky top-0 flex h-svh items-center overflow-hidden bg-black">
         <div className="absolute inset-0">
-          <HeroCanvas images={list} progress={scrollYProgress} active={active} />
+          {list.map((src, i) => (
+            <HeroSlide
+              key={`${src}-${i}`}
+              src={src}
+              index={i}
+              count={list.length}
+              progress={scrollYProgress}
+              priority={i === 0}
+            />
+          ))}
         </div>
 
-        {/* Atmosphere veil — readable copy, still lets car planes show through */}
+        {/* Readability veil — left-weighted so copy stays clear */}
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/35 to-black/25"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/45 to-black/20"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/75"
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(255,138,61,0.16),transparent_55%)]"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/65"
           aria-hidden
         />
 
@@ -106,9 +89,9 @@ export function ScrollHero({
           className="relative z-10 mx-auto w-full max-w-6xl px-4"
         >
           <motion.div
-            initial={{ opacity: 0, y: 28 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.75, ease: [0.22, 1, 0.36, 1] }}
+            transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
           >
             {children}
           </motion.div>
@@ -129,5 +112,56 @@ export function ScrollHero({
         </motion.div>
       </div>
     </div>
+  );
+}
+
+function HeroSlide({
+  src,
+  index,
+  count,
+  progress,
+  priority,
+}: {
+  src: string;
+  index: number;
+  count: number;
+  progress: MotionValue<number>;
+  priority?: boolean;
+}) {
+  const w = 1 / count;
+  const fade = w * 0.35;
+  const start = index * w;
+  const end = (index + 1) * w;
+
+  let inputs: number[];
+  let outputs: number[];
+  if (index === 0) {
+    inputs = [0, end - fade, end];
+    outputs = [1, 1, 0];
+  } else if (index === count - 1) {
+    inputs = [start, start + fade, 1];
+    outputs = [0, 1, 1];
+  } else {
+    inputs = [start, start + fade, end - fade, end];
+    outputs = [0, 1, 1, 0];
+  }
+
+  const opacity = useTransform(progress, inputs, outputs);
+  // Subtle Ken Burns — keep scale modest so ratio stays natural
+  const scale = useTransform(progress, [start, end], [1.06, 1]);
+
+  return (
+    <motion.div style={{ opacity }} className="absolute inset-0">
+      <motion.div style={{ scale }} className="absolute inset-0">
+        <Image
+          src={src}
+          alt=""
+          fill
+          priority={priority}
+          sizes="100vw"
+          className="object-cover object-center"
+        />
+      </motion.div>
+    </motion.div>
   );
 }

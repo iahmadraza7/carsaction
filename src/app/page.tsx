@@ -39,12 +39,11 @@ function hero(id: string): string {
   return `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=2000&q=80`;
 }
 
+// Three wide landscape shots — object-cover keeps ratio correct full-bleed
 const HERO_IMAGES = [
-  hero("1503376780353-7e6692767b70"),
-  hero("1519641471654-76ce0107ad1b"),
-  hero("1580273916550-e323be2ae537"),
-  // Previous photo-1542362567-b07e5437d68a returns 404 from Unsplash
-  hero("1492144534655-ae79c964c9d7"),
+  hero("1503376780353-7e6692767b70"), // dark sports car, highway
+  hero("1519641471654-76ce0107ad1b"), // white SUV, mountains
+  hero("1492144534655-ae79c964c9d7"), // classic red sports car
 ];
 
 function dashboardHref(role?: string) {
