@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       images: { orderBy: { order: "asc" }, take: 1, select: { url: true } },
     },
   });
-  if (!vehicle) return { title: "Auction not found" };
+  if (!vehicle) notFound();
 
   const title = `${vehicle.year} ${vehicle.make} ${vehicle.model} · Repo auction`;
   const description = `Bid on this ${vehicle.year} ${vehicle.make} ${vehicle.model} repossessed vehicle on CARSaction.`;

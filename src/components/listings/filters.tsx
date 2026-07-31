@@ -105,21 +105,20 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
   );
 
   const availableModels = React.useMemo(() => {
-    const source =
-      makesSel.length > 0
-        ? makesSel.flatMap((m) => modelsByMake[m] ?? [])
-        : Object.values(modelsByMake).flat();
+    if (makesSel.length === 0) return [];
+    const source = makesSel.flatMap((m) => modelsByMake[m] ?? []);
     return Array.from(new Set(source)).sort((a, b) => a.localeCompare(b));
   }, [makesSel, modelsByMake]);
 
   function handleMakesChange(next: string[]) {
     setMakesSel(next);
+    // Drop models that no longer belong to any selected make.
     setModelsSel((prev) =>
-      prev.filter((model) =>
-        next.length === 0
-          ? true
-          : next.some((m) => (modelsByMake[m] ?? []).includes(model)),
-      ),
+      next.length === 0
+        ? []
+        : prev.filter((model) =>
+            next.some((m) => (modelsByMake[m] ?? []).includes(model)),
+          ),
     );
   }
 
@@ -184,7 +183,9 @@ export function Filters({ makes, modelsByMake, onApplied }: FiltersProps) {
           options={availableModels.map((m) => ({ value: m, label: m }))}
           selected={modelsSel}
           onChange={setModelsSel}
-          emptyLabel="Select a make first (or any model)"
+          emptyLabel={
+            makesSel.length === 0 ? "Select a make first" : "No models for selected make"
+          }
         />
       </Field>
 

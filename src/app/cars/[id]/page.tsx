@@ -36,7 +36,7 @@ export async function generateMetadata({ params }: { params: Params }): Promise<
       images: { orderBy: { order: "asc" }, take: 1, select: { url: true } },
     },
   });
-  if (!listing) return { title: "Car not found" };
+  if (!listing) notFound();
 
   const title = `${listing.title} · ${formatPrice(Number(listing.price))}`;
   const description = `${listing.year} ${listing.make} ${listing.model} for sale in Singapore at ${formatPrice(Number(listing.price))}. View photos, full specs and WhatsApp the dealer on CARSaction.`;
