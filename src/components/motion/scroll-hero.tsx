@@ -87,13 +87,17 @@ export function ScrollHero({
           <HeroCanvas images={list} progress={scrollYProgress} active={active} />
         </div>
 
-        {/* Atmosphere veil — keeps HTML readable over the WebGL plane */}
+        {/* Atmosphere veil — readable copy, still lets car planes show through */}
         <div
-          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/75 via-black/45 to-black/88"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-r from-black/80 via-black/35 to-black/25"
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_25%_15%,rgba(255,138,61,0.22),transparent_50%)]"
+          className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/75"
+          aria-hidden
+        />
+        <div
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_20%_20%,rgba(255,138,61,0.16),transparent_55%)]"
           aria-hidden
         />
 

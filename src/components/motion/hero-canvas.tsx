@@ -14,9 +14,6 @@ type HeroCanvasProps = {
   active: boolean;
 };
 
-const PLANE_W = 6.4;
-const PLANE_H = 3.6;
-
 function useIsMobile() {
   const [mobile, setMobile] = React.useState(false);
   React.useEffect(() => {
@@ -33,21 +30,25 @@ function ImagePlane({
   url,
   position,
   rotation,
+  scale = 1,
 }: {
   url: string;
   position: [number, number, number];
   rotation: [number, number, number];
+  scale?: number;
 }) {
   const texture = useTexture(url);
   React.useLayoutEffect(() => {
     texture.colorSpace = THREE.SRGBColorSpace;
     texture.anisotropy = 8;
+    texture.needsUpdate = true;
   }, [texture]);
 
+  // Basic material: full texture brightness without depending on scene lights.
   return (
-    <mesh position={position} rotation={rotation}>
-      <planeGeometry args={[PLANE_W, PLANE_H]} />
-      <meshStandardMaterial map={texture} roughness={0.85} metalness={0.05} />
+    <mesh position={position} rotation={rotation} scale={scale}>
+      <planeGeometry args={[8, 4.5]} />
+      <meshBasicMaterial map={texture} toneMapped={false} />
     </mesh>
   );
 }
@@ -62,24 +63,26 @@ function Scene({
   mobile: boolean;
 }) {
   const { camera } = useThree();
+  const lookTarget = React.useMemo(() => new THREE.Vector3(0, 0, -4), []);
   const pointer = React.useRef({ x: 0, y: 0 });
   const targetPointer = React.useRef({ x: 0, y: 0 });
   const drift = React.useRef(0);
 
   const planes = React.useMemo(() => {
     const list = images.slice(0, mobile ? 3 : 4);
-    const depthGap = mobile ? 2.8 : 3.2;
+    const depthGap = mobile ? 3.4 : 4;
     return list.map((url, i) => {
       const t = list.length <= 1 ? 0 : i / (list.length - 1);
-      const curve = (t - 0.5) * (mobile ? 0.55 : 0.85);
+      const curve = (t - 0.5) * (mobile ? 0.7 : 1.1);
       return {
         url,
         position: [
-          curve * 1.6 + (i % 2 === 0 ? -0.15 : 0.2),
-          (i % 2 === 0 ? 0.12 : -0.18) * (mobile ? 0.6 : 1),
-          -i * depthGap,
+          curve * 2.2 + (i % 2 === 0 ? 0.35 : -0.25),
+          (i % 2 === 0 ? 0.05 : -0.2) * (mobile ? 0.5 : 1),
+          -1.2 - i * depthGap,
         ] as [number, number, number],
-        rotation: [0, -curve * 0.35, 0] as [number, number, number],
+        rotation: [0, -curve * 0.28, 0] as [number, number, number],
+        scale: i === 0 ? 1.15 : 1 - i * 0.04,
       };
     });
   }, [images, mobile]);
@@ -96,43 +99,36 @@ function Scene({
     return () => window.removeEventListener("pointermove", onMove);
   }, [mobile]);
 
-  useFrame((state, delta) => {
+  useFrame((_state, delta) => {
     const p = progress.get();
     drift.current += delta;
 
-    const tiltScale = mobile ? 0.02 : 0.06;
+    const tiltScale = mobile ? 0.025 : 0.07;
     pointer.current.x += (targetPointer.current.x - pointer.current.x) * 0.06;
     pointer.current.y += (targetPointer.current.y - pointer.current.y) * 0.06;
 
-    const idleX = Math.sin(drift.current * 0.35) * 0.04;
-    const idleY = Math.cos(drift.current * 0.28) * 0.025;
+    const idleX = Math.sin(drift.current * 0.35) * 0.05;
+    const idleY = Math.cos(drift.current * 0.28) * 0.03;
 
-    const camZ = THREE.MathUtils.lerp(4.2, mobile ? -3.2 : -5.5, p);
-    const camY = THREE.MathUtils.lerp(0.15, -0.35, p) + idleY + pointer.current.y * -tiltScale;
-    const camX = idleX + pointer.current.x * tiltScale * 1.4;
-    const rotY = THREE.MathUtils.lerp(0.08, -0.22, p) + pointer.current.x * tiltScale * 0.8;
+    const camZ = THREE.MathUtils.lerp(5.2, mobile ? -4 : -7.5, p);
+    const camY = THREE.MathUtils.lerp(0.1, -0.4, p) + idleY + pointer.current.y * -tiltScale;
+    const camX = idleX + pointer.current.x * tiltScale * 1.6;
 
     camera.position.set(camX, camY, camZ);
-    camera.rotation.set(
-      -0.04 + pointer.current.y * tiltScale * 0.5,
-      rotY,
-      0,
+    lookTarget.set(
+      pointer.current.x * tiltScale * 2.5,
+      camY * 0.2,
+      THREE.MathUtils.lerp(-2.5, -10, p),
     );
-    camera.updateProjectionMatrix();
+    camera.lookAt(lookTarget);
   });
 
   return (
     <>
-      <color attach="background" args={["#0c0a08"]} />
-      <fog attach="fog" args={["#0c0a08", 6, 18]} />
-      <ambientLight intensity={0.35} />
-      <directionalLight
-        position={[2.5, 3.5, 4]}
-        intensity={1.15}
-        color="#ffb86b"
-      />
-      <pointLight position={[-3, 1.5, 2]} intensity={0.45} color="#ff8a3d" />
-      <pointLight position={[2, -1, -4]} intensity={0.25} color="#fff4e6" />
+      <color attach="background" args={["#120e0a"]} />
+      <fog attach="fog" args={["#120e0a", 10, 28]} />
+      <ambientLight intensity={0.9} />
+      <directionalLight position={[3, 4, 5]} intensity={0.55} color="#ffb86b" />
 
       {planes.map((plane) => (
         <ImagePlane key={plane.url} {...plane} />
@@ -153,11 +149,17 @@ export function HeroCanvas({ images, progress, active }: HeroCanvasProps) {
 
   return (
     <Canvas
-      className="absolute inset-0 h-full w-full"
+      className="!absolute inset-0 h-full w-full"
+      style={{ position: "absolute", inset: 0, width: "100%", height: "100%" }}
       dpr={[1, 1.5]}
       frameloop={active ? "always" : "never"}
-      gl={{ antialias: true, alpha: false, powerPreference: "high-performance" }}
-      camera={{ position: [0, 0.15, 4.2], fov: mobile ? 48 : 42, near: 0.1, far: 40 }}
+      gl={{
+        antialias: true,
+        alpha: false,
+        powerPreference: "high-performance",
+        preserveDrawingBuffer: true,
+      }}
+      camera={{ position: [0, 0.1, 5.2], fov: mobile ? 50 : 40, near: 0.1, far: 50 }}
     >
       <React.Suspense fallback={null}>
         <Scene images={list} progress={progress} mobile={mobile} />
